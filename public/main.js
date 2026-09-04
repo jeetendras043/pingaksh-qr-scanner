@@ -137,20 +137,28 @@
 
   const extractCode = (raw) => {
     const trimmed = (raw || "").trim();
+    let code = "";
     try {
       const url = new URL(trimmed);
       const fromSearch = url.searchParams.get("search") || url.searchParams.get("code") || url.searchParams.get("JewelCode");
-      if (fromSearch) return fromSearch.replace(/[^A-Za-z0-9]/g, "");
+      if (fromSearch) code = fromSearch.replace(/[^A-Za-z0-9]/g, "");
     } catch {
       /* not a URL */
     }
-    const queryMatch = trimmed.match(/[?&](?:search|code|JewelCode)=([A-Za-z0-9]+)/i);
-    if (queryMatch) return queryMatch[1];
-    const idMatch = trimmed.match(/\b(?:id|jewels?\s*code|code)\s*[:#-]?\s*([A-Za-z0-9]{4,})/i);
-    if (idMatch) return idMatch[1];
-    const pathMatch = trimmed.match(/\/([A-Za-z0-9]{4,})$/);
-    if (pathMatch) return pathMatch[1];
-    return trimmed.replace(/[^A-Za-z0-9]/g, "");
+    if (!code) {
+      const queryMatch = trimmed.match(/[?&](?:search|code|JewelCode)=([A-Za-z0-9]+)/i);
+      if (queryMatch) code = queryMatch[1];
+    }
+    if (!code) {
+      const idMatch = trimmed.match(/\b(?:id|jewels?\s*code|code)\s*[:#-]?\s*([A-Za-z0-9]{4,})/i);
+      if (idMatch) code = idMatch[1];
+    }
+    if (!code) {
+      const pathMatch = trimmed.match(/\/([A-Za-z0-9]{4,})$/);
+      if (pathMatch) code = pathMatch[1];
+    }
+    if (!code) code = trimmed.replace(/[^A-Za-z0-9]/g, "");
+    return code.toUpperCase();
   };
 
   const listRow = (label, value) =>
@@ -599,6 +607,15 @@
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
     fetchProduct(codeInput.value);
+  });
+
+  codeInput.addEventListener("input", () => {
+    const start = codeInput.selectionStart;
+    const end = codeInput.selectionEnd;
+    codeInput.value = codeInput.value.toUpperCase();
+    if (start != null && end != null) {
+      codeInput.setSelectionRange(start, end);
+    }
   });
 
   modeTabs.forEach((tab) => {

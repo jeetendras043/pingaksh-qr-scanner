@@ -218,6 +218,7 @@ body {
   font: 500 0.98rem/1.2 var(--sans);
   padding: 11px 12px;
   outline: none;
+  text-transform: uppercase;
 }
 
 #codeInput::placeholder {

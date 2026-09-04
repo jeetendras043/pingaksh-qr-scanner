@@ -43,12 +43,19 @@ router.get("/", (req, res) => {
 });
 
 router.get("/api/product", async (req, res) => {
-  const code = String(req.query.search || req.query.code || "").trim();
+  const code = String(req.query.search || req.query.code || "")
+    .trim()
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase();
   return lookupProduct(res, code);
 });
 
 router.get("/api/product/:code", async (req, res) => {
-  return lookupProduct(res, String(req.params.code || "").trim());
+  const code = String(req.params.code || "")
+    .trim()
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase();
+  return lookupProduct(res, code);
 });
 
 async function lookupProduct(res, code) {
