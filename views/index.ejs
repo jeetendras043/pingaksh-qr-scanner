@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>PINGAKSH · Jewellery Lookup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#27235D">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PINGAKSH">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body class="view-home">
+    <div class="ambient"></div>
+    <div class="grain"></div>
+
+    <div class="app">
+        <header class="brand">
+            <img src="/icons/pingaksh-logo-light.png" alt="Pingaksh Diamond Jewellery" class="brand-logo">
+            <p class="brand-kicker">Search by jewels code, IGI, or HUID — or scan a QR tag</p>
+        </header>
+
+        <main class="stage">
+            <section id="atelierCard" class="atelier-card">
+                <div class="atelier-head">
+                    <p id="modeKicker" class="mode-kicker">Lookup</p>
+                    <h1 id="modeTitle" class="mode-title">Search by code, IGI, or HUID</h1>
+                    <ol class="scan-steps">
+                        <li>Face the tag toward the light</li>
+                        <li>Hold it close inside the frame</li>
+                        <li>Keep still until the code is read</li>
+                    </ol>
+                </div>
+
+                <div class="atelier-body">
+                <div class="lookup-controls">
+                <div class="lookup-row">
+                <div class="mode-switch" role="tablist">
+                    <button type="button" class="mode-tab is-active" data-mode="search" role="tab">Enter code</button>
+                    <button type="button" class="mode-tab" data-mode="scan" role="tab">Scan tag</button>
+                </div>
+
+                <form id="searchForm" class="search-form" autocomplete="off">
+                    <label class="search-shell">
+                        <span class="sr-only">Jewels code, IGI, or HUID</span>
+                        <input id="codeInput" name="code" placeholder="Jewels code, IGI, or HUID" spellcheck="false" />
+                        <button type="submit" class="gold-btn">Search</button>
+                    </label>
+                </form>
+                <button id="newLookupBtn" type="button" class="pill-btn new-lookup">New piece</button>
+                </div>
+                <p class="help-copy">Search with a jewels code, IGI number, or HUID. You can also scan the jewellery QR tag.</p>
+                </div>
+
+                <div id="scannerBox" class="scanner-stage" hidden>
+                    <div class="scanner-frame">
+                        <div class="scan-plate" aria-hidden="true"></div>
+                        <video id="video" playsinline muted autoplay></video>
+                        <canvas id="canvas" hidden></canvas>
+                        <div class="scan-colorwash" aria-hidden="true"></div>
+                        <div class="scan-goldwash" aria-hidden="true"></div>
+                        <div class="scan-glow"></div>
+                        <div class="scan-mask">
+                            <div class="scan-window">
+                                <span class="corner tl"></span>
+                                <span class="corner tr"></span>
+                                <span class="corner bl"></span>
+                                <span class="corner br"></span>
+                            </div>
+                        </div>
+                        <div class="scan-line"></div>
+                        <p class="scan-aim">Position the tag in the frame</p>
+                    </div>
+                    <div class="scanner-bar">
+                        <p id="scanResult" class="scan-status">Hold the jewellery tag close, within the frame</p>
+                        <div class="camera-tools">
+                            <label class="camera-select-wrap">
+                                <span>Camera</span>
+                                <select id="cameraSelect" hidden></select>
+                            </label>
+                            <button id="cancelScanBtn" type="button" class="pill-btn scanner-close">Close camera</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </section>
+
+            <section id="loadingState" class="loading-state" hidden>
+                <div class="spinner"></div>
+                <p>Fetching certified details…</p>
+            </section>
+
+            <section id="errorBox" class="empty-state" hidden>
+                <div class="empty-gem" aria-hidden="true">
+                    <span class="spark s1"></span>
+                    <span class="spark s2"></span>
+                    <span class="spark s3"></span>
+                    <svg viewBox="0 0 80 88" class="gem-svg">
+                        <polygon class="gem-facet f1" points="40,6 70,30 40,44 10,30"/>
+                        <polygon class="gem-facet f2" points="40,44 70,30 40,82"/>
+                        <polygon class="gem-facet f3" points="40,44 10,30 40,82"/>
+                        <polygon class="gem-edge" points="40,6 70,30 40,82 10,30" fill="none"/>
+                    </svg>
+                </div>
+                <p class="empty-kicker" id="errorKicker">No match</p>
+                <h2 id="errorTitle">No piece found</h2>
+                <p id="errorMessage">We could not find jewellery for that search. Try a jewels code, IGI, or HUID.</p>
+                <p class="empty-query" id="errorQueryWrap" hidden>Searched for <b id="errorQuery"></b></p>
+                <div class="empty-actions">
+                    <button type="button" class="gold-btn" id="errorRetry">Try another search</button>
+                    <button type="button" class="pill-btn" id="errorScan">Scan QR tag</button>
+                </div>
+            </section>
+
+            <section id="productResult" class="product-result" aria-live="polite"></section>
+        </main>
+    </div>
+
+    <div id="imagePreview" class="image-preview" hidden>
+        <button type="button" class="preview-close" id="previewClose" aria-label="Close preview">Close</button>
+        <button type="button" class="preview-nav preview-prev" id="previewPrev" aria-label="Previous image">‹</button>
+        <figure class="preview-stage">
+            <img id="previewImage" alt="Jewellery preview">
+            <figcaption id="previewCaption"></figcaption>
+        </figure>
+        <button type="button" class="preview-nav preview-next" id="previewNext" aria-label="Next image">›</button>
+    </div>
+
+    <div id="pwaBanner" class="pwa-banner" hidden>
+        <p id="pwaBannerText">Install PINGAKSH on this device for faster lookup and camera scan.</p>
+        <div class="pwa-actions">
+            <button type="button" class="gold-btn" id="pwaInstallBtn">Install app</button>
+            <button type="button" class="pill-btn" id="pwaDismissBtn">Not now</button>
+        </div>
+    </div>
+
+    <script src="/libs/jsQR.js"></script>
+    <script src="/main.js"></script>
+    <script src="/pwa.js"></script>
+</body>
+
+</html>

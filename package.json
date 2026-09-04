@@ -1,0 +1,25 @@
+{
+  "name": "jewellery-qr-scanner",
+  "version": "1.0.0",
+  "description": "Premium jewellery QR scanner and product lookup",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "start:lan": "node scripts/ensure-dev-cert.js && DEV_HTTPS=true node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://origin.cursor.com/git/jeetendra-sahu/tmp-73d22ab510e08488.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.20.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "validator": "^13.15.35"
+  }
+}
