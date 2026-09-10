@@ -3,6 +3,7 @@
   const codeInput = document.getElementById("codeInput");
   const searchForm = document.getElementById("searchForm");
   const cancelScanBtn = document.getElementById("cancelScanBtn");
+  const scanQuickBtn = document.getElementById("scanQuickBtn");
   const newLookupBtn = document.getElementById("newLookupBtn");
   const scannerBox = document.getElementById("scannerBox");
   const scannerFrame = document.querySelector(".scanner-frame");
@@ -219,7 +220,7 @@
     }
   };
 
-  const renderProduct = (product) => {
+  const renderProductLegacy = (product) => {
     const info = product.product_info || {};
     const price = product.price_breaking || {};
     const images = product.inventory_images || [];
@@ -372,6 +373,71 @@
       openBtn.addEventListener("click", () => openPreview(0));
     }
 
+    setResultView();
+    setMode("search", { keepFocus: false });
+  };
+
+  const renderProduct = (product) => {
+    const info = product.product_info || {};
+    const price = product.price_breaking || {};
+    const images = product.inventory_images || [];
+    const diamonds = (product.diamonds || []).filter((d) => d.diamond_clarity !== "Total");
+    const diamondTotal = (product.diamonds || []).find((d) => d.diamond_clarity === "Total");
+    const colourStones = product.colour_stone || [];
+    const subCategory = info.sub_category || "Jewellery Piece";
+    const specRows = [
+      ["Metal", escapeHtml(info.Metal || "-")], ["Karatage", escapeHtml(info.Karatage || "-")],
+      ["Metal weight", `${formatNum(info.metal_weight)} g`], ["Diamond weight", `${formatNum(info.total_diamond_weight, 2)} ct`],
+      ["Total diamonds", String(info.total_diamonds ?? "-")], ["Clarity", escapeHtml(info.diamond_clarity || "-")],
+      ["Style no.", escapeHtml(product.style_no || "-")], ["IGI", escapeHtml(product.igi_no || "-")], ["HUID", escapeHtml(product.huid_no || "-")],
+    ];
+    const priceRows = [
+      price.metal && [`Metal - ${formatNum(price.metal.metal_weight)} g`, formatINR(price.metal.metal_price)],
+      price.diamond && [`Diamond - ${formatNum(price.diamond.diamond_weight, 3)} ct`, formatINR(price.diamond.diamond_price)],
+      price.manufacturing_price && ["Manufacturing", formatINR(price.manufacturing_price.manufacturing_price)],
+      price.colour_stone && price.colour_stone.colour_stone_count > 0 && [`Colour stone - ${price.colour_stone.colour_stone_count} pcs`, formatINR(price.colour_stone.colour_stone_price)],
+      price.total && ["Grand total", formatINR(price.total), true],
+    ].filter(Boolean);
+
+    productResult.innerHTML = `
+      <article class="piece-card">
+        <div class="piece-col piece-col-info">
+          <div class="piece-intro">
+            <div class="piece-head">
+              <p class="piece-kicker">${escapeHtml(info.Category || "Collection")}</p>
+              <h2 class="piece-title">${escapeHtml(subCategory)}</h2>
+              <p class="piece-code"><span class="piece-code-label">Jewels code</span><b class="piece-code-value">${escapeHtml(product.jewels_code)}</b></p>
+            </div>
+            ${price.total ? `<div class="price-strip"><span class="price-label">Total value</span><b class="price-amount">${formatINR(price.total)}</b></div>` : ""}
+          </div>
+          <details class="product-accordion" open><summary>Product details</summary><ul class="detail-list">${specRows.map(([label, value]) => listRow(label, value)).join("")}</ul></details>
+          ${priceRows.length ? `<details class="product-accordion price-breakdown-accordion"><summary>Price breakdown</summary><ul class="detail-list">${priceRows.map(([label, value, total]) => `<li class="${total ? "total" : ""}"><span>${escapeHtml(label)}</span><strong>${value}</strong></li>`).join("")}</ul></details>` : ""}
+          ${diamonds.length ? `<details class="product-accordion diamonds-accordion"><summary>Diamond list <span>${diamonds.length} type${diamonds.length === 1 ? "" : "s"}</span></summary><div class="diamond-table-wrap"><table class="diamond-table"><thead><tr><th>Clarity</th><th>Shape</th><th>Size</th><th>Wts</th><th>Qty</th><th>Amt</th></tr></thead><tbody>${diamonds.map((d) => `<tr><td>${escapeHtml(d.diamond_clarity || "-")}</td><td>${escapeHtml(d.diamond_shape || "Round")}</td><td>${escapeHtml(d.size?.diamond_slieve_size || d.size?.mm_size || "-")}</td><td>${formatNum(d.diamond_weight, 3)}</td><td>${d.diamond_count ?? 0}</td><td>${formatINR(d.total_price)}</td></tr>`).join("")}${diamondTotal ? `<tr class="diamond-total"><td>Total</td><td>-</td><td>-</td><td>${formatNum(diamondTotal.diamond_weight, 3)}</td><td>${diamondTotal.diamond_count ?? 0}</td><td>${formatINR(diamondTotal.total_price)}</td></tr>` : ""}</tbody></table></div></details>` : ""}
+          ${colourStones.length ? `<details class="product-accordion"><summary>Colour stones</summary><ul class="detail-list">${colourStones.map((cs) => listRow(`${cs.colour_stone_count ?? 0} pcs`, formatINR(cs.total_amount))).join("")}</ul></details>` : ""}
+        </div>
+        <div class="piece-col piece-col-media">${images[0] ? `<div class="piece-visual"><button type="button" class="image-open" data-image-index="0" aria-label="Enlarge product image"><img src="${escapeHtml(images[0])}" alt="${escapeHtml(subCategory)}"></button><p class="zoom-hint">Click image to enlarge</p></div>` : ""}</div>
+      </article>`;
+
+    // Arrange the result as one clear product story: image, details, price, diamonds.
+    const infoColumn = productResult.querySelector(".piece-col-info");
+    const mediaColumn = productResult.querySelector(".piece-col-media");
+    const priceBreakdown = productResult.querySelector(".price-breakdown-accordion");
+    const diamondListing = productResult.querySelector(".diamonds-accordion");
+    const productDetails = infoColumn?.querySelector(".product-accordion");
+    const productImage = mediaColumn?.querySelector(".piece-visual");
+    if (infoColumn) {
+      if (productImage) infoColumn.prepend(productImage);
+      if (productDetails && priceBreakdown) productDetails.after(priceBreakdown);
+      if (priceBreakdown && diamondListing) priceBreakdown.after(diamondListing);
+      else if (productDetails && diamondListing) productDetails.after(diamondListing);
+    }
+    if (mediaColumn) mediaColumn.remove();
+
+    galleryImages = images;
+    galleryTitle = subCategory;
+    galleryIndex = 0;
+    const openBtn = productResult.querySelector(".image-open");
+    if (openBtn) openBtn.addEventListener("click", () => openPreview(0));
     setResultView();
     setMode("search", { keepFocus: false });
   };
@@ -621,6 +687,8 @@
   modeTabs.forEach((tab) => {
     tab.addEventListener("click", () => setMode(tab.dataset.mode));
   });
+
+  scanQuickBtn.addEventListener("click", () => setMode("scan"));
 
   cancelScanBtn.addEventListener("click", () => setMode("search"));
   newLookupBtn.addEventListener("click", () => {
