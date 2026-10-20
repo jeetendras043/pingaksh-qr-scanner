@@ -220,202 +220,325 @@
     }
   };
 
-  const renderProductLegacy = (product) => {
-    const info = product.product_info || {};
-    const price = product.price_breaking || {};
-    const images = product.inventory_images || [];
-    const diamonds = (product.diamonds || []).filter((d) => d.diamond_clarity !== "Total");
-    const diamondTotal = (product.diamonds || []).find((d) => d.diamond_clarity === "Total");
-    const colourStones = product.colour_stone || [];
-    const subCategory = info.sub_category || "Jewellery Piece";
-
-    const specRows = [
-      ["Metal", escapeHtml(info.Metal || "—")],
-      ["Karatage", escapeHtml(info.Karatage || "—")],
-      ["Metal weight", `${formatNum(info.metal_weight)} g`],
-      ["Diamond weight", `${formatNum(info.total_diamond_weight, 2)} ct`],
-      ["Total diamonds", String(info.total_diamonds ?? "—")],
-      ["Clarity", escapeHtml(info.diamond_clarity || "—")],
-      ["Style no.", escapeHtml(product.style_no || "—")],
-      ["IGI", escapeHtml(product.igi_no || "—")],
-      ["HUID", escapeHtml(product.huid_no || "—")],
-    ];
-
-    const priceRows = [
-      price.metal && [
-        `Metal · ${formatNum(price.metal.metal_weight)} g`,
-        formatINR(price.metal.metal_price),
-      ],
-      price.diamond && [
-        `Diamond · ${formatNum(price.diamond.diamond_weight, 3)} ct`,
-        formatINR(price.diamond.diamond_price),
-      ],
-      price.manufacturing_price && [
-        "Manufacturing",
-        formatINR(price.manufacturing_price.manufacturing_price),
-      ],
-      price.colour_stone &&
-        price.colour_stone.colour_stone_count > 0 && [
-          `Colour stone · ${price.colour_stone.colour_stone_count} pcs`,
-          formatINR(price.colour_stone.colour_stone_price),
-        ],
-      price.total && ["Grand total", formatINR(price.total), true],
-    ].filter(Boolean);
-
-    productResult.innerHTML = `
-      <article class="piece-card">
-        <div class="piece-col piece-col-media">
-        ${
-          images[0]
-            ? `<div class="piece-visual">
-                <button type="button" class="image-open" data-image-index="0" aria-label="Enlarge product image">
-                  <img src="${escapeHtml(images[0])}" alt="${escapeHtml(subCategory)}">
-                </button>
-                <p class="zoom-hint">Click image to enlarge</p>
-              </div>`
-            : ""
-        }
-        <div class="list-block details-block">
-          <h3>Product details</h3>
-          <ul class="detail-list">
-            ${specRows.map(([label, value]) => listRow(label, value)).join("")}
-          </ul>
-        </div>
-        </div>
-        <div class="piece-col piece-col-info">
-        <div class="piece-intro">
-        <div class="piece-head">
-          <p class="piece-kicker">${escapeHtml(info.Category || "Collection")}</p>
-          <h2 class="piece-title">${escapeHtml(subCategory)}</h2>
-          <p class="piece-code">
-            <span class="piece-code-label">Jewels code</span>
-            <b class="piece-code-value">${escapeHtml(product.jewels_code)}</b>
-          </p>
-        </div>
-        ${
-          price.total
-            ? `<div class="price-strip">
-                <span class="price-label">Total value</span>
-                <b class="price-amount"><span class="rupee">₹</span>${formatINRDigits(price.total)}</b>
-              </div>`
-            : ""
-        }
-        ${
-          priceRows.length
-            ? `<div class="list-block price-block">
-                <h3>Price breakdown</h3>
-                <ul class="detail-list">
-                  ${priceRows
-                    .map(([label, value, total]) =>
-                      `<li class="${total ? "total" : ""}"><span>${escapeHtml(label)}</span><strong>${value}</strong></li>`
-                    )
-                    .join("")}
-                </ul>
-              </div>`
-            : ""
-        }
-        </div>
-        ${
-          diamonds.length
-            ? `<div class="list-block diamonds-block">
-                <h3>Diamond list</h3>
-                ${diamonds
-                  .map(
-                    (d) => `
-                    <div class="diamond-item">
-                      <div>
-                        <strong>${escapeHtml(d.diamond_shape || "Round")} · ${escapeHtml(d.size?.mm_size || "—")} mm</strong>
-                        <div class="meta">${d.diamond_count ?? 0} pcs · ${formatNum(d.diamond_weight, 3)} ct · ${escapeHtml(d.size?.diamond_slieve_size || "")}</div>
-                      </div>
-                      <div class="amt">${formatINR(d.total_price)}</div>
-                    </div>`
-                  )
-                  .join("")}
-                ${
-                  diamondTotal
-                    ? `<div class="diamond-item">
-                        <div><strong>Total diamonds</strong><div class="meta">${diamondTotal.diamond_count} pcs · ${formatNum(diamondTotal.diamond_weight, 3)} ct</div></div>
-                        <div class="amt">${formatINR(diamondTotal.total_price)}</div>
-                      </div>`
-                    : ""
-                }
-              </div>`
-            : ""
-        }
-        ${
-          colourStones.length
-            ? `<div class="list-block stones-block">
-                <h3>Colour stones</h3>
-                <ul class="detail-list">
-                  ${colourStones
-                    .map(
-                      (cs) =>
-                        listRow(
-                          `${cs.colour_stone_count ?? 0} pcs`,
-                          formatINR(cs.total_amount)
-                        )
-                    )
-                    .join("")}
-                </ul>
-              </div>`
-            : ""
-        }
-        </div>
-      </article>
-    `;
-
-    galleryImages = images;
-    galleryTitle = subCategory;
-    galleryIndex = 0;
-
-    const openBtn = productResult.querySelector(".image-open");
-    if (openBtn) {
-      openBtn.addEventListener("click", () => openPreview(0));
-    }
-
-    setResultView();
-    setMode("search", { keepFocus: false });
-  };
-
   const renderProduct = (product) => {
     const info = product.product_info || {};
     const price = product.price_breaking || {};
-    const images = product.inventory_images || [];
-    const diamonds = (product.diamonds || []).filter((d) => d.diamond_clarity !== "Total");
-    const diamondTotal = (product.diamonds || []).find((d) => d.diamond_clarity === "Total");
-    const colourStones = product.colour_stone || [];
-    const subCategory = info.sub_category || "Jewellery Piece";
+    const rawImages = Array.isArray(product.inventory_images)
+      ? product.inventory_images
+      : Array.isArray(product.images)
+        ? product.images
+        : typeof product.inventory_images === "string" && product.inventory_images.trim()
+          ? [product.inventory_images.trim()]
+          : product.image
+            ? [product.image]
+            : [];
+
+    const images = rawImages
+      .map((img) => (typeof img === "string" ? img : img?.url || img?.path || img?.image || ""))
+      .map((img) => (typeof img === "string" ? img.trim() : ""))
+      .filter((img) => img.length > 0);
+
+    const diamonds = (product.diamonds || []).filter(
+      (d) => d.diamond_clarity !== "Total" && d.clarity !== "Total"
+    );
+
+    const jewelsCode = product.jewels_code || "";
+    const styleNo = product.style_no || "";
+    const igiNo = product.igi_no || "";
+    const huidNo = product.huid_no || "";
+    const metalName = product.metal || info.Metal || "";
+    const purityVal = product.metal_putiry ?? product.metal_purity;
+    const purityStr = purityVal != null ? `${purityVal}%` : (info.Karatage || "");
+    const diamondClarity =
+      product.diamond_clarity ||
+      info.diamond_clarity ||
+      diamonds.find((d) => d.clarity || d.diamond_clarity)?.clarity ||
+      diamonds.find((d) => d.clarity || d.diamond_clarity)?.diamond_clarity ||
+      "";
+
+    const metalDisplay = metalName || "";
+
+    const rawStyleNo = String(styleNo || "").trim();
+    const cleanStyleVal = rawStyleNo.replace(/^style\s*[:#-]?\s*/i, "").trim();
+    const styleDisplayVal = cleanStyleVal || rawStyleNo;
+
+    const subCategory =
+      info.sub_category ||
+      product.sub_category ||
+      (styleDisplayVal ? `Style ${styleDisplayVal}` : "Jewellery Piece");
+
+    const categoryKicker =
+      info.Category ||
+      product.category ||
+      (metalName ? `${metalName} Certified Jewellery` : "Pingaksh Diamond Jewellery");
+
     const specRows = [
-      ["Metal", escapeHtml(info.Metal || "-")], ["Karatage", escapeHtml(info.Karatage || "-")],
-      ["Metal weight", `${formatNum(info.metal_weight)} g`], ["Diamond weight", `${formatNum(info.total_diamond_weight, 2)} ct`],
-      ["Total diamonds", String(info.total_diamonds ?? "-")], ["Clarity", escapeHtml(info.diamond_clarity || "-")],
-      ["Style no.", escapeHtml(product.style_no || "-")], ["IGI", escapeHtml(product.igi_no || "-")], ["HUID", escapeHtml(product.huid_no || "-")],
-    ];
-    const priceRows = [
-      price.metal && [`Metal - ${formatNum(price.metal.metal_weight)} g`, formatINR(price.metal.metal_price)],
-      price.diamond && [`Diamond - ${formatNum(price.diamond.diamond_weight, 3)} ct`, formatINR(price.diamond.diamond_price)],
-      price.manufacturing_price && ["Manufacturing", formatINR(price.manufacturing_price.manufacturing_price)],
-      price.colour_stone && price.colour_stone.colour_stone_count > 0 && [`Colour stone - ${price.colour_stone.colour_stone_count} pcs`, formatINR(price.colour_stone.colour_stone_price)],
-      price.total && ["Grand total", formatINR(price.total), true],
+      jewelsCode && ["Jewels code", escapeHtml(jewelsCode)],
+      styleDisplayVal && ["Style no.", escapeHtml(styleDisplayVal)],
+      huidNo && ["HUID", escapeHtml(huidNo)],
+      igiNo && ["IGI certificate", escapeHtml(igiNo)],
+      metalName && ["Metal", escapeHtml(metalName)],
+      purityStr && ["Purity", escapeHtml(purityStr)],
+      product.metal_gwt != null && ["Gross weight (GWT)", `${formatNum(product.metal_gwt, 2)} g`],
+      (product.metal_nwt != null || info.metal_weight != null) && [
+        "Net weight (NWT)",
+        `${formatNum(product.metal_nwt ?? info.metal_weight, 2)} g`,
+      ],
+      product.metal_rate != null && [
+        "Metal rate",
+        `${formatINR(product.metal_rate)} / g`,
+      ],
+      diamondClarity && ["Diamond clarity", escapeHtml(diamondClarity)],
+      (product.total_dia_pcs != null || info.total_diamonds != null) && [
+        "Total diamonds",
+        `${product.total_dia_pcs ?? info.total_diamonds} pcs`,
+      ],
+      (product.total_dia_weight != null || info.total_diamond_weight != null) && [
+        "Total diamond weight",
+        `${formatNum(product.total_dia_weight ?? info.total_diamond_weight, 3)} ct`,
+      ],
     ].filter(Boolean);
+
+    const priceRows = [];
+
+    const metalPrice = product.metal_total_price ?? price.metal?.metal_price;
+    if (metalPrice != null) {
+      const netWt = product.metal_nwt ?? price.metal?.metal_weight;
+      const rateStr = product.metal_rate != null ? ` @ ${formatINR(product.metal_rate)}/g` : "";
+      const wtStr = netWt != null ? ` (${formatNum(netWt, 2)} g${rateStr})` : "";
+      priceRows.push([`Metal${wtStr}`, formatINR(metalPrice)]);
+    }
+
+    const legacyDiaTotal = (product.diamonds || []).find(
+      (d) => d.diamond_clarity === "Total" || d.clarity === "Total"
+    );
+
+    const diaSummaryPcs =
+      product.total_dia_pcs ??
+      legacyDiaTotal?.diamond_count ??
+      diamonds.reduce((acc, d) => acc + (Number(d.pcs ?? d.diamond_count) || 0), 0);
+    const diaSummaryWt =
+      product.total_dia_weight ??
+      legacyDiaTotal?.diamond_weight ??
+      diamonds.reduce((acc, d) => acc + (Number(d.weight ?? d.diamond_weight) || 0), 0);
+    const diaSummaryAmt =
+      product.total_dia_amount ??
+      legacyDiaTotal?.total_price ??
+      diamonds.reduce((acc, d) => acc + (Number(d.amount ?? d.total_price) || 0), 0);
+
+    const diaPrice = product.total_dia_amount ?? price.diamond?.diamond_price;
+    if (diaPrice != null) {
+      let diaLabel = "Diamonds";
+      if (diaSummaryPcs > 0 && diaSummaryWt > 0) {
+        diaLabel = `Diamonds (${diaSummaryPcs} pcs · ${formatNum(diaSummaryWt, 3)} ct)`;
+      } else if (diaSummaryWt > 0) {
+        diaLabel = `Diamonds (${formatNum(diaSummaryWt, 3)} ct)`;
+      }
+      priceRows.push([diaLabel, formatINR(diaPrice)]);
+    }
+
+    const labourAmt =
+      product.total_labour ??
+      product.labour?.amount ??
+      price.manufacturing_price?.manufacturing_price;
+    if (labourAmt != null) {
+      const labourRate = product.labour?.rate;
+      const labourLabel = labourRate
+        ? `Labour / Making (@ ${formatINR(labourRate)}/g)`
+        : "Labour / Making charges";
+      priceRows.push([labourLabel, formatINR(labourAmt)]);
+    }
+
+    if (Array.isArray(product.other_charges) && product.other_charges.length > 0) {
+      product.other_charges.forEach((charge) => {
+        const code = charge.code || "Other";
+        priceRows.push([`${code} charge`, formatINR(charge.amount)]);
+      });
+    } else if (product.total_other_charges != null && product.total_other_charges > 0) {
+      priceRows.push(["Other charges", formatINR(product.total_other_charges)]);
+    }
+
+    const colourStones = product.colour_stone || [];
+    if (price.colour_stone && price.colour_stone.colour_stone_count > 0) {
+      priceRows.push([
+        `Colour stone · ${price.colour_stone.colour_stone_count} pcs`,
+        formatINR(price.colour_stone.colour_stone_price),
+      ]);
+    } else if (colourStones.length > 0) {
+      colourStones.forEach((cs) => {
+        priceRows.push([
+          `Colour stone (${cs.colour_stone_count ?? 1} pcs)`,
+          formatINR(cs.total_amount),
+        ]);
+      });
+    }
+
+    if (product.total_price != null && product.gst_amount != null) {
+      priceRows.push(["Subtotal (Excl. GST)", formatINR(product.total_price)]);
+    }
+
+    if (product.gst_amount != null) {
+      priceRows.push(["GST", formatINR(product.gst_amount)]);
+    }
+
+    const grandTotal = product.grand_total ?? product.total_price ?? price.total;
+    if (grandTotal != null) {
+      priceRows.push(["Grand total", formatINR(grandTotal), true]);
+    }
+
+    const hasDiamonds = diamonds.length > 0;
 
     productResult.innerHTML = `
       <article class="piece-card">
         <div class="piece-col piece-col-info">
+          ${!images[0]
+        ? `<div class="piece-crest" aria-hidden="true">
+                  <div class="crest-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <polygon points="12 2 2 9 12 22 22 9 12 2" stroke="url(#goldGrad)" />
+                      <polyline points="2 9 12 14 22 9" stroke="url(#goldGrad)" />
+                      <line x1="12" y1="2" x2="12" y2="14" stroke="url(#goldGrad)" />
+                      <defs>
+                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#f5e6b3" />
+                          <stop offset="100%" stop-color="#c9b37a" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <span class="crest-text">PINGAKSH CERTIFIED JEWELLERY</span>
+                </div>`
+        : ""
+      }
           <div class="piece-intro">
             <div class="piece-head">
-              <p class="piece-kicker">${escapeHtml(info.Category || "Collection")}</p>
-              <h2 class="piece-title">${escapeHtml(subCategory)}</h2>
-              <p class="piece-code"><span class="piece-code-label">Jewels code</span><b class="piece-code-value">${escapeHtml(product.jewels_code)}</b></p>
+              <h2 class="piece-title">
+                ${styleDisplayVal
+        ? `<span class="piece-title-label">Style</span> <span class="piece-title-value">${escapeHtml(styleDisplayVal)}</span>`
+        : `<span class="piece-title-value">${escapeHtml(subCategory || "Jewellery Piece")}</span>`
+      }
+              </h2>
             </div>
-            ${price.total ? `<div class="price-strip"><span class="price-label">Total value</span><b class="price-amount">${formatINR(price.total)}</b></div>` : ""}
+            ${grandTotal != null
+        ? `<div class="price-strip">
+                    <span class="price-label">Grand Total (Incl. GST)</span>
+                    <b class="price-amount"><span class="rupee">₹</span>${formatINRDigits(grandTotal)}</b>
+                  </div>`
+        : ""
+      }
+            ${metalDisplay || diamondClarity
+        ? `<div class="piece-specs-grid">
+                    ${metalDisplay
+          ? `<div class="spec-card">
+                            <span class="spec-label">Metal</span>
+                            <b class="spec-value">${escapeHtml(metalDisplay)}</b>
+                          </div>`
+          : ""
+        }
+                    ${diamondClarity
+          ? `<div class="spec-card">
+                            <span class="spec-label">Diamond Clarity</span>
+                            <b class="spec-value">${escapeHtml(diamondClarity)}</b>
+                          </div>`
+          : ""
+        }
+                  </div>`
+        : ""
+      }
           </div>
-          <details class="product-accordion" open><summary>Product details</summary><ul class="detail-list">${specRows.map(([label, value]) => listRow(label, value)).join("")}</ul></details>
-          ${priceRows.length ? `<details class="product-accordion price-breakdown-accordion"><summary>Price breakdown</summary><ul class="detail-list">${priceRows.map(([label, value, total]) => `<li class="${total ? "total" : ""}"><span>${escapeHtml(label)}</span><strong>${value}</strong></li>`).join("")}</ul></details>` : ""}
-          ${diamonds.length ? `<details class="product-accordion diamonds-accordion"><summary>Diamond list <span>${diamonds.length} type${diamonds.length === 1 ? "" : "s"}</span></summary><div class="diamond-table-wrap"><table class="diamond-table"><thead><tr><th>Clarity</th><th>Shape</th><th>Size</th><th>Wts</th><th>Qty</th><th>Amt</th></tr></thead><tbody>${diamonds.map((d) => `<tr><td>${escapeHtml(d.diamond_clarity || "-")}</td><td>${escapeHtml(d.diamond_shape || "Round")}</td><td>${escapeHtml(d.size?.diamond_slieve_size || d.size?.mm_size || "-")}</td><td>${formatNum(d.diamond_weight, 3)}</td><td>${d.diamond_count ?? 0}</td><td>${formatINR(d.total_price)}</td></tr>`).join("")}${diamondTotal ? `<tr class="diamond-total"><td>Total</td><td>-</td><td>-</td><td>${formatNum(diamondTotal.diamond_weight, 3)}</td><td>${diamondTotal.diamond_count ?? 0}</td><td>${formatINR(diamondTotal.total_price)}</td></tr>` : ""}</tbody></table></div></details>` : ""}
-          ${colourStones.length ? `<details class="product-accordion"><summary>Colour stones</summary><ul class="detail-list">${colourStones.map((cs) => listRow(`${cs.colour_stone_count ?? 0} pcs`, formatINR(cs.total_amount))).join("")}</ul></details>` : ""}
+          ${specRows.length
+        ? `<details class="product-accordion">
+                  <summary>Product details</summary>
+                  <ul class="detail-list">${specRows.map(([label, value]) => listRow(label, value)).join("")}</ul>
+                </details>`
+        : ""
+      }
+          ${priceRows.length
+        ? `<details class="product-accordion price-breakdown-accordion">
+                  <summary>Price breakdown</summary>
+                  <ul class="detail-list">
+                    ${priceRows
+          .map(
+            ([label, value, total]) =>
+              `<li class="${total ? "total" : ""}"><span>${escapeHtml(label)}</span><strong>${value}</strong></li>`
+          )
+          .join("")}
+                  </ul>
+                </details>`
+        : ""
+      }
+          ${hasDiamonds
+        ? `<details class="product-accordion diamonds-accordion">
+                  <summary>Diamond list <span>${diamonds.length} size${diamonds.length === 1 ? "" : "s"} · ${diaSummaryPcs} pcs · ${formatNum(diaSummaryWt, 3)} ct</span></summary>
+                  <div class="diamond-table-wrap">
+                    <table class="diamond-table">
+                      <thead>
+                        <tr>
+                          <th>Clarity</th>
+                          <th>Shape</th>
+                          <th>Size</th>
+                          <th>Pcs</th>
+                          <th>Weight</th>
+                          <th>Rate</th>
+                          <th>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${diamonds
+          .map(
+            (d) => `<tr>
+                              <td>${escapeHtml(d.clarity || d.diamond_clarity || diamondClarity || "—")}</td>
+                              <td>${escapeHtml(d.shape || d.diamond_shape || "Round")}</td>
+                              <td>${escapeHtml(d.size?.diamond_slieve_size || d.size?.mm_size || d.size || "—")}</td>
+                              <td>${d.pcs ?? d.diamond_count ?? "—"}</td>
+                              <td>${formatNum(d.weight ?? d.diamond_weight, 3)} ct</td>
+                              <td>${d.rate ? formatINR(d.rate) : "—"}</td>
+                              <td>${formatINR(d.amount ?? d.total_price)}</td>
+                            </tr>`
+          )
+          .join("")}
+                        <tr class="diamond-total">
+                          <td>Total</td>
+                          <td>—</td>
+                          <td>—</td>
+                          <td>${diaSummaryPcs}</td>
+                          <td>${formatNum(diaSummaryWt, 3)} ct</td>
+                          <td>—</td>
+                          <td>${formatINR(diaSummaryAmt)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </details>`
+        : ""
+      }
+          ${colourStones.length
+        ? `<details class="product-accordion"><summary>Colour stones</summary><ul class="detail-list">${colourStones.map((cs) => listRow(`${cs.colour_stone_count ?? 0} pcs`, formatINR(cs.total_amount))).join("")}</ul></details>`
+        : ""
+      }
         </div>
-        <div class="piece-col piece-col-media">${images[0] ? `<div class="piece-visual"><button type="button" class="image-open" data-image-index="0" aria-label="Enlarge product image"><img src="${escapeHtml(images[0])}" alt="${escapeHtml(subCategory)}"></button><p class="zoom-hint">Click image to enlarge</p></div>` : ""}</div>
+        <div class="piece-col piece-col-media">${images.length > 0
+        ? `<div class="piece-visual">
+                <button type="button" class="image-open" data-image-index="0" aria-label="Enlarge product image">
+                  <img id="mainProductImg" src="${escapeHtml(images[0])}" alt="${escapeHtml(subCategory)}">
+                </button>
+                ${images.length > 1
+          ? `<div class="piece-thumbnails">
+                        ${images
+            .map(
+              (src, idx) => `
+                            <button type="button" class="piece-thumb-btn ${idx === 0 ? "is-active" : ""}" data-image-index="${idx}" aria-label="View photo ${idx + 1}">
+                              <img src="${escapeHtml(src)}" alt="Thumbnail ${idx + 1}">
+                            </button>`
+            )
+            .join("")}
+                      </div>`
+          : ""
+        }
+                <p class="zoom-hint">Click image to enlarge${images.length > 1 ? ` · ${images.length} photos` : ""}</p>
+              </div>`
+        : ""
+      }</div>
       </article>`;
 
     // Arrange the result as one clear product story: image, details, price, diamonds.
@@ -436,14 +559,34 @@
     galleryImages = images;
     galleryTitle = subCategory;
     galleryIndex = 0;
+
+    const mainImg = productResult.querySelector("#mainProductImg");
     const openBtn = productResult.querySelector(".image-open");
-    if (openBtn) openBtn.addEventListener("click", () => openPreview(0));
+    const thumbBtns = productResult.querySelectorAll(".piece-thumb-btn");
+
+    if (openBtn) {
+      openBtn.addEventListener("click", () => openPreview(galleryIndex));
+    }
+
+    thumbBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = Number(btn.dataset.imageIndex) || 0;
+        galleryIndex = idx;
+        if (mainImg && galleryImages[idx]) {
+          mainImg.src = galleryImages[idx];
+        }
+        thumbBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
+      });
+    });
     setResultView();
     setMode("search", { keepFocus: false });
   };
 
   const isProduct = (product) =>
-    product && (product.jewels_code || product.product_info || product.style_no);
+    product &&
+    typeof product === "object" &&
+    (product.jewels_code || product.style_no || product.huid_no || product.igi_no || product.product_info);
 
   const lookupProduct = async (code) => {
     const res = await fetch(`/api/product?search=${encodeURIComponent(code)}`);
@@ -531,15 +674,15 @@
       audio: false,
       video: deviceId
         ? {
-            deviceId: { exact: deviceId },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-          }
+          deviceId: { exact: deviceId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        }
         : {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-          },
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
     };
 
     try {

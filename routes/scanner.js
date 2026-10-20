@@ -6,13 +6,13 @@ const router = express.Router();
 
 const API_BASE =
   process.env.PRODUCT_API_BASE_URL ||
-  "https://api.pingaksh.co/api/sold-product/get";
+  "http://localhost:3000/api/sold-product/details";
 const AUTH_TOKEN = process.env.AuthorizationToken;
 
 const isProduct = (product) =>
   product &&
   typeof product === "object" &&
-  (product.jewels_code || product.product_info || product.style_no);
+  (product.jewels_code || product.style_no || product.huid_no || product.igi_no || product.product_info);
 
 const lookupLiveProduct = async (code) => {
   const url = new URL(API_BASE);

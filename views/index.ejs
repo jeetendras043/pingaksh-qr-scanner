@@ -13,7 +13,9 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
 </head>
 
@@ -40,59 +42,66 @@
                 </div>
 
                 <div class="atelier-body">
-                <div class="lookup-controls">
-                <div class="lookup-row">
-                <div class="mode-switch" role="tablist">
-                    <button type="button" class="mode-tab is-active" data-mode="search" role="tab">Enter code</button>
-                    <button type="button" class="mode-tab" data-mode="scan" role="tab">Scan tag</button>
-                </div>
+                    <div class="lookup-controls">
+                        <div class="lookup-row">
+                            <div class="mode-switch" role="tablist">
+                                <button type="button" class="mode-tab is-active" data-mode="search" role="tab">Enter
+                                    code</button>
+                                <button type="button" class="mode-tab" data-mode="scan" role="tab">Scan tag</button>
+                            </div>
 
-                <form id="searchForm" class="search-form" autocomplete="off">
-                    <label class="search-shell">
-                        <span class="sr-only">Jewels code, IGI, or HUID</span>
-                        <input id="codeInput" name="code" placeholder="Jewels code, IGI, or HUID" spellcheck="false" autocapitalize="characters" autocomplete="off" />
-                        <button type="submit" class="gold-btn">Search</button>
-                        <button id="scanQuickBtn" type="button" class="scan-quick-btn" aria-label="Scan QR tag">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M15 5h5v4M20 15v4h-4M9 20H4v-5M8 8h3v3H8zM13 13h3v3h-3z"/></svg>
-                            <span>Scan QR</span>
-                        </button>
-                    </label>
-                </form>
-                <button id="newLookupBtn" type="button" class="pill-btn new-lookup">New piece</button>
-                </div>
-                <p class="help-copy">Search with a jewels code, IGI number, or HUID. You can also scan the jewellery QR tag.</p>
-                </div>
+                            <form id="searchForm" class="search-form" autocomplete="off">
+                                <label class="search-shell">
+                                    <span class="sr-only">Jewels code, IGI, or HUID</span>
+                                    <input id="codeInput" name="code" placeholder="Jewels code, IGI, or HUID"
+                                        spellcheck="false" autocapitalize="characters" autocomplete="off" />
+                                    <button type="submit" class="gold-btn">Search</button>
+                                    <button id="scanQuickBtn" type="button" class="scan-quick-btn"
+                                        aria-label="Scan QR tag">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M4 9V5h4M15 5h5v4M20 15v4h-4M9 20H4v-5M8 8h3v3H8zM13 13h3v3h-3z" />
+                                        </svg>
+                                        <span>Scan QR</span>
+                                    </button>
+                                </label>
+                            </form>
+                            <button id="newLookupBtn" type="button" class="pill-btn new-lookup">New piece</button>
+                        </div>
+                        <p class="help-copy">Search with a jewels code, IGI number, or HUID. You can also scan the
+                            jewellery QR tag.</p>
+                    </div>
 
-                <div id="scannerBox" class="scanner-stage" hidden>
-                    <div class="scanner-frame">
-                        <div class="scan-plate" aria-hidden="true"></div>
-                        <video id="video" playsinline muted autoplay></video>
-                        <canvas id="canvas" hidden></canvas>
-                        <div class="scan-colorwash" aria-hidden="true"></div>
-                        <div class="scan-goldwash" aria-hidden="true"></div>
-                        <div class="scan-glow"></div>
-                        <div class="scan-mask">
-                            <div class="scan-window">
-                                <span class="corner tl"></span>
-                                <span class="corner tr"></span>
-                                <span class="corner bl"></span>
-                                <span class="corner br"></span>
+                    <div id="scannerBox" class="scanner-stage" hidden>
+                        <div class="scanner-frame">
+                            <div class="scan-plate" aria-hidden="true"></div>
+                            <video id="video" playsinline muted autoplay></video>
+                            <canvas id="canvas" hidden></canvas>
+                            <div class="scan-colorwash" aria-hidden="true"></div>
+                            <div class="scan-goldwash" aria-hidden="true"></div>
+                            <div class="scan-glow"></div>
+                            <div class="scan-mask">
+                                <div class="scan-window">
+                                    <span class="corner tl"></span>
+                                    <span class="corner tr"></span>
+                                    <span class="corner bl"></span>
+                                    <span class="corner br"></span>
+                                </div>
+                            </div>
+                            <div class="scan-line"></div>
+                            <p class="scan-aim">Position the tag in the frame</p>
+                        </div>
+                        <div class="scanner-bar">
+                            <p id="scanResult" class="scan-status">Hold the jewellery tag close, within the frame</p>
+                            <div class="camera-tools">
+                                <label class="camera-select-wrap">
+                                    <span>Camera</span>
+                                    <select id="cameraSelect" hidden></select>
+                                </label>
+                                <button id="cancelScanBtn" type="button" class="pill-btn scanner-close">Close
+                                    camera</button>
                             </div>
                         </div>
-                        <div class="scan-line"></div>
-                        <p class="scan-aim">Position the tag in the frame</p>
                     </div>
-                    <div class="scanner-bar">
-                        <p id="scanResult" class="scan-status">Hold the jewellery tag close, within the frame</p>
-                        <div class="camera-tools">
-                            <label class="camera-select-wrap">
-                                <span>Camera</span>
-                                <select id="cameraSelect" hidden></select>
-                            </label>
-                            <button id="cancelScanBtn" type="button" class="pill-btn scanner-close">Close camera</button>
-                        </div>
-                    </div>
-                </div>
                 </div>
             </section>
 
@@ -107,10 +116,10 @@
                     <span class="spark s2"></span>
                     <span class="spark s3"></span>
                     <svg viewBox="0 0 80 88" class="gem-svg">
-                        <polygon class="gem-facet f1" points="40,6 70,30 40,44 10,30"/>
-                        <polygon class="gem-facet f2" points="40,44 70,30 40,82"/>
-                        <polygon class="gem-facet f3" points="40,44 10,30 40,82"/>
-                        <polygon class="gem-edge" points="40,6 70,30 40,82 10,30" fill="none"/>
+                        <polygon class="gem-facet f1" points="40,6 70,30 40,44 10,30" />
+                        <polygon class="gem-facet f2" points="40,44 70,30 40,82" />
+                        <polygon class="gem-facet f3" points="40,44 10,30 40,82" />
+                        <polygon class="gem-edge" points="40,6 70,30 40,82 10,30" fill="none" />
                     </svg>
                 </div>
                 <p class="empty-kicker" id="errorKicker">No match</p>
