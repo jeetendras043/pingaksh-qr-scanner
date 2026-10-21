@@ -42,6 +42,8 @@
   let galleryImages = [];
   let galleryIndex = 0;
   let galleryTitle = "";
+  let currentSearchCode = "";
+  let isB2BMode = false;
 
   const formatINR = (value) => {
     if (value == null || Number.isNaN(Number(value))) return "—";
@@ -121,6 +123,8 @@
 
   const setHomeView = () => {
     hasProduct = false;
+    currentSearchCode = "";
+    isB2BMode = false;
     body.classList.remove("view-result");
     body.classList.add("view-home");
     productResult.innerHTML = "";
@@ -220,7 +224,9 @@
     }
   };
 
-  const renderProduct = (product) => {
+  const renderProduct = (product, options = {}) => {
+    const isB2B = Boolean(options.isB2B ?? isB2BMode);
+    isB2BMode = isB2B;
     const info = product.product_info || {};
     const price = product.price_breaking || {};
     const rawImages = Array.isArray(product.inventory_images)
@@ -241,6 +247,62 @@
     const diamonds = (product.diamonds || []).filter(
       (d) => d.diamond_clarity !== "Total" && d.clarity !== "Total"
     );
+
+    const rawStones = Array.isArray(product.stones)
+      ? product.stones
+      : Array.isArray(product.colour_stone)
+        ? product.colour_stone
+        : Array.isArray(product.color_stones)
+          ? product.color_stones
+          : [];
+
+    const stones = rawStones
+      .filter((s) => s && typeof s === "object")
+      .filter((s) => s.code !== "Total" && s.name !== "Total" && s.type !== "Total")
+      .map((s) => ({
+        code: s.code || s.stone_code || s.name || s.type || s.stone_name || "",
+        pcs: s.pcs ?? s.pieces ?? s.count ?? s.colour_stone_count ?? s.color_stone_count ?? null,
+        weight: s.weight ?? s.stone_weight ?? s.wt ?? null,
+        rate: s.rate ?? s.stone_rate ?? null,
+        amount: s.amount ?? s.total_amount ?? s.stone_price ?? s.total_price ?? null,
+        shape: s.shape || s.stone_shape || "",
+        size: s.size?.diamond_slieve_size || s.size?.mm_size || s.size || s.stone_size || "",
+        clarity: s.clarity || "",
+      }));
+
+    const stoneSummaryPcs =
+      product.total_stone_pcs ??
+      product.total_colour_stone_pcs ??
+      product.total_color_stone_pcs ??
+      price.colour_stone?.colour_stone_count ??
+      stones.reduce((acc, s) => acc + (Number(s.pcs) || 0), 0);
+
+    const stoneSummaryWt =
+      product.total_stone_weight ??
+      product.total_colour_stone_weight ??
+      product.total_color_stone_weight ??
+      price.colour_stone?.colour_stone_weight ??
+      stones.reduce((acc, s) => acc + (Number(s.weight) || 0), 0);
+
+    const stoneSummaryAmt =
+      product.total_stone_amount ??
+      product.total_colour_stone_amount ??
+      product.total_color_stone_amount ??
+      price.colour_stone?.colour_stone_price ??
+      stones.reduce((acc, s) => acc + (Number(s.amount) || 0), 0);
+
+    const hasStones =
+      stones.length > 0 ||
+      (stoneSummaryAmt != null && stoneSummaryAmt > 0) ||
+      (stoneSummaryPcs != null && stoneSummaryPcs > 0) ||
+      (stoneSummaryWt != null && stoneSummaryWt > 0);
+
+    const formatStoneName = (code) => {
+      if (!code) return "Colour Stone";
+      const c = String(code).trim();
+      if (/^cs$/i.test(c)) return "Colour Stone (CS)";
+      return c.toUpperCase();
+    };
 
     const jewelsCode = product.jewels_code || "";
     const styleNo = product.style_no || "";
@@ -272,14 +334,20 @@
       product.category ||
       (metalName ? `${metalName} Certified Jewellery` : "Pingaksh Diamond Jewellery");
 
-    const specRows = [
-      jewelsCode && ["Jewels code", escapeHtml(jewelsCode)],
+    const productInfoRows = [
       styleDisplayVal && ["Style no.", escapeHtml(styleDisplayVal)],
-      huidNo && ["HUID", escapeHtml(huidNo)],
+      jewelsCode && ["Jewels code", escapeHtml(jewelsCode)],
       igiNo && ["IGI certificate", escapeHtml(igiNo)],
+      huidNo && ["HUID", escapeHtml(huidNo)],
+    ].filter(Boolean);
+
+    const metalInfoRows = [
       metalName && ["Metal", escapeHtml(metalName)],
       purityStr && ["Purity", escapeHtml(purityStr)],
-      product.metal_gwt != null && ["Gross weight (GWT)", `${formatNum(product.metal_gwt, 2)} g`],
+      (product.metal_gwt != null || info.gross_weight != null) && [
+        "Gross weight (GWT)",
+        `${formatNum(product.metal_gwt ?? info.gross_weight, 2)} g`,
+      ],
       (product.metal_nwt != null || info.metal_weight != null) && [
         "Net weight (NWT)",
         `${formatNum(product.metal_nwt ?? info.metal_weight, 2)} g`,
@@ -288,6 +356,9 @@
         "Metal rate",
         `${formatINR(product.metal_rate)} / g`,
       ],
+    ].filter(Boolean);
+
+    const diamondInfoRows = [
       diamondClarity && ["Diamond clarity", escapeHtml(diamondClarity)],
       (product.total_dia_pcs != null || info.total_diamonds != null) && [
         "Total diamonds",
@@ -298,6 +369,27 @@
         `${formatNum(product.total_dia_weight ?? info.total_diamond_weight, 3)} ct`,
       ],
     ].filter(Boolean);
+
+    const detailGroups = [
+      {
+        id: "product-info",
+        title: "Product info",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>`,
+        rows: productInfoRows,
+      },
+      {
+        id: "metal-info",
+        title: "Metal info",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
+        rows: metalInfoRows,
+      },
+      {
+        id: "diamond-info",
+        title: "Diamond info",
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 18 3 22 9 12 22 2 9"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="3" x2="12" y2="13"/><line x1="6" y1="3" x2="9.5" y2="9"/><line x1="18" y1="3" x2="14.5" y2="9"/></svg>`,
+        rows: diamondInfoRows,
+      },
+    ].filter((g) => g.rows.length > 0);
 
     const priceRows = [];
 
@@ -337,6 +429,20 @@
       priceRows.push([diaLabel, formatINR(diaPrice)]);
     }
 
+    if (stoneSummaryAmt != null && (stoneSummaryAmt > 0 || stones.length > 0)) {
+      let stoneLabel = "Colour stone";
+      if (stoneSummaryPcs > 1 && stoneSummaryWt > 0) {
+        stoneLabel = `Colour stones (${stoneSummaryPcs} pcs · ${formatNum(stoneSummaryWt, 2)} ct)`;
+      } else if (stoneSummaryPcs === 1 && stoneSummaryWt > 0) {
+        stoneLabel = `Colour stone (1 pc · ${formatNum(stoneSummaryWt, 2)} ct)`;
+      } else if (stoneSummaryPcs > 0) {
+        stoneLabel = `Colour stones (${stoneSummaryPcs} pcs)`;
+      } else if (stoneSummaryWt > 0) {
+        stoneLabel = `Colour stones (${formatNum(stoneSummaryWt, 2)} ct)`;
+      }
+      priceRows.push([stoneLabel, formatINR(stoneSummaryAmt)]);
+    }
+
     const labourAmt =
       product.total_labour ??
       product.labour?.amount ??
@@ -358,21 +464,6 @@
       priceRows.push(["Other charges", formatINR(product.total_other_charges)]);
     }
 
-    const colourStones = product.colour_stone || [];
-    if (price.colour_stone && price.colour_stone.colour_stone_count > 0) {
-      priceRows.push([
-        `Colour stone · ${price.colour_stone.colour_stone_count} pcs`,
-        formatINR(price.colour_stone.colour_stone_price),
-      ]);
-    } else if (colourStones.length > 0) {
-      colourStones.forEach((cs) => {
-        priceRows.push([
-          `Colour stone (${cs.colour_stone_count ?? 1} pcs)`,
-          formatINR(cs.total_amount),
-        ]);
-      });
-    }
-
     if (product.total_price != null && product.gst_amount != null) {
       priceRows.push(["Subtotal (Excl. GST)", formatINR(product.total_price)]);
     }
@@ -387,6 +478,8 @@
     }
 
     const hasDiamonds = diamonds.length > 0;
+    const stonesHaveShape = stones.some((s) => s.shape && s.shape !== "—");
+    const stonesHaveSize = stones.some((s) => s.size && s.size !== "—");
 
     productResult.innerHTML = `
       <article class="piece-card">
@@ -412,12 +505,55 @@
       }
           <div class="piece-intro">
             <div class="piece-head">
-              <h2 class="piece-title">
-                ${styleDisplayVal
-        ? `<span class="piece-title-label">Style</span> <span class="piece-title-value">${escapeHtml(styleDisplayVal)}</span>`
-        : `<span class="piece-title-value">${escapeHtml(subCategory || "Jewellery Piece")}</span>`
-      }
-              </h2>
+              <div class="piece-head-row">
+                <h2 class="piece-title">
+                  ${styleDisplayVal
+          ? `<span class="piece-title-label">Style</span> <span class="piece-title-value">${escapeHtml(styleDisplayVal)}</span>`
+          : `<span class="piece-title-value">${escapeHtml(subCategory || "Jewellery Piece")}</span>`
+        }
+                </h2>
+                <div class="b2b-action-wrap ${isB2B ? "is-unlocked" : ""}">
+                  ${!isB2B
+          ? `<button type="button" id="b2bTriggerBtn" class="b2b-trigger-btn" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <span>B2B Breakup</span>
+                    </button>`
+          : `<div class="b2b-unlocked-badge">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                      <span>B2B Active</span>
+                    </div>
+                    <button type="button" id="b2bExitBtn" class="pill-btn b2b-exit-btn">Exit B2B</button>`
+        }
+                </div>
+              </div>
+              <div id="b2bPromptBox" class="b2b-prompt-box" hidden>
+                <form id="b2bForm" class="b2b-form" autocomplete="off">
+                  <div class="b2b-form-head">
+                    <span class="b2b-form-badge">B2B SECURE ACCESS</span>
+                    <p class="b2b-form-kicker">Enter secret password to view B2B breakup</p>
+                  </div>
+                  <div class="b2b-input-row">
+                    <div class="b2b-input-shell">
+                      <input
+                        type="password"
+                        id="b2bPasswordInput"
+                        name="b2b_secret"
+                        placeholder="Secret password"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                      />
+                      <button type="button" id="b2bTogglePwBtn" class="b2b-pw-toggle" aria-label="Show password">
+                        <svg class="eye-open" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" hidden><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      </button>
+                    </div>
+                    <button type="submit" id="b2bSubmitBtn" class="gold-btn b2b-submit-btn">Unlock</button>
+                    <button type="button" id="b2bCancelBtn" class="pill-btn b2b-cancel-btn">Cancel</button>
+                  </div>
+                  <p id="b2bErrorMsg" class="b2b-error-msg" hidden></p>
+                </form>
+              </div>
             </div>
             ${grandTotal != null
         ? `<div class="price-strip">
@@ -446,10 +582,25 @@
         : ""
       }
           </div>
-          ${specRows.length
-        ? `<details class="product-accordion">
+          ${detailGroups.length
+        ? `<details class="product-accordion product-details-accordion">
                   <summary>Product details</summary>
-                  <ul class="detail-list">${specRows.map(([label, value]) => listRow(label, value)).join("")}</ul>
+                  <div class="product-groups-wrap" style="--group-count: ${detailGroups.length};">
+                    ${detailGroups
+            .map(
+              (group) => `
+                    <div class="detail-group detail-group-${group.id}">
+                      <div class="detail-group-head">
+                        <span class="detail-group-icon">${group.icon}</span>
+                        <h4 class="detail-group-title">${group.title}</h4>
+                      </div>
+                      <ul class="detail-list">
+                        ${group.rows.map(([label, value]) => listRow(label, value)).join("")}
+                      </ul>
+                    </div>`
+            )
+            .join("")}
+                  </div>
                 </details>`
         : ""
       }
@@ -477,10 +628,10 @@
                           <th>Clarity</th>
                           <th>Shape</th>
                           <th>Size</th>
-                          <th>Pcs</th>
-                          <th>Weight</th>
-                          <th>Rate</th>
-                          <th>Amount</th>
+                          <th class="col-num">Pcs</th>
+                          <th class="col-num">Weight</th>
+                          <th class="col-num">Rate</th>
+                          <th class="col-num">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -490,10 +641,10 @@
                               <td>${escapeHtml(d.clarity || d.diamond_clarity || diamondClarity || "—")}</td>
                               <td>${escapeHtml(d.shape || d.diamond_shape || "Round")}</td>
                               <td>${escapeHtml(d.size?.diamond_slieve_size || d.size?.mm_size || d.size || "—")}</td>
-                              <td>${d.pcs ?? d.diamond_count ?? "—"}</td>
-                              <td>${formatNum(d.weight ?? d.diamond_weight, 3)} ct</td>
-                              <td>${d.rate ? formatINR(d.rate) : "—"}</td>
-                              <td>${formatINR(d.amount ?? d.total_price)}</td>
+                              <td class="col-num">${d.pcs ?? d.diamond_count ?? "—"}</td>
+                              <td class="col-num">${formatNum(d.weight ?? d.diamond_weight, 3)} ct</td>
+                              <td class="col-num">${d.rate ? formatINR(d.rate) : "—"}</td>
+                              <td class="col-num">${formatINR(d.amount ?? d.total_price)}</td>
                             </tr>`
           )
           .join("")}
@@ -501,10 +652,10 @@
                           <td>Total</td>
                           <td>—</td>
                           <td>—</td>
-                          <td>${diaSummaryPcs}</td>
-                          <td>${formatNum(diaSummaryWt, 3)} ct</td>
-                          <td>—</td>
-                          <td>${formatINR(diaSummaryAmt)}</td>
+                          <td class="col-num">${diaSummaryPcs}</td>
+                          <td class="col-num">${formatNum(diaSummaryWt, 3)} ct</td>
+                          <td class="col-num">—</td>
+                          <td class="col-num">${formatINR(diaSummaryAmt)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -512,8 +663,49 @@
                 </details>`
         : ""
       }
-          ${colourStones.length
-        ? `<details class="product-accordion"><summary>Colour stones</summary><ul class="detail-list">${colourStones.map((cs) => listRow(`${cs.colour_stone_count ?? 0} pcs`, formatINR(cs.total_amount))).join("")}</ul></details>`
+          ${stones.length > 0
+        ? `<details class="product-accordion stones-accordion">
+                  <summary>Colour stone list <span>${stones.length} item${stones.length === 1 ? "" : "s"} · ${stoneSummaryPcs} pcs · ${formatNum(stoneSummaryWt, 2)} ct</span></summary>
+                  <div class="stone-table-wrap diamond-table-wrap">
+                    <table class="stone-table diamond-table">
+                      <thead>
+                        <tr>
+                          <th>Type / Code</th>
+                          ${stonesHaveShape ? `<th>Shape</th>` : ""}
+                          ${stonesHaveSize ? `<th>Size</th>` : ""}
+                          <th class="col-num">Pcs</th>
+                          <th class="col-num">Weight</th>
+                          <th class="col-num">Rate</th>
+                          <th class="col-num">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${stones
+          .map(
+            (s) => `<tr>
+                              <td>${escapeHtml(formatStoneName(s.code))}</td>
+                              ${stonesHaveShape ? `<td>${escapeHtml(s.shape || "—")}</td>` : ""}
+                              ${stonesHaveSize ? `<td>${escapeHtml(s.size || "—")}</td>` : ""}
+                              <td class="col-num">${s.pcs ?? "—"}</td>
+                              <td class="col-num">${s.weight != null ? `${formatNum(s.weight, 2)} ct` : "—"}</td>
+                              <td class="col-num">${s.rate != null ? `${formatINR(s.rate)} / ct` : "—"}</td>
+                              <td class="col-num">${formatINR(s.amount)}</td>
+                            </tr>`
+          )
+          .join("")}
+                        <tr class="stone-total diamond-total">
+                          <td>Total</td>
+                          ${stonesHaveShape ? `<td>—</td>` : ""}
+                          ${stonesHaveSize ? `<td>—</td>` : ""}
+                          <td class="col-num">${stoneSummaryPcs}</td>
+                          <td class="col-num">${formatNum(stoneSummaryWt, 2)} ct</td>
+                          <td class="col-num">—</td>
+                          <td class="col-num">${formatINR(stoneSummaryAmt)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </details>`
         : ""
       }
         </div>
@@ -541,18 +733,24 @@
       }</div>
       </article>`;
 
-    // Arrange the result as one clear product story: image, details, price, diamonds.
+    // Arrange the result as one clear product story: image, details, price, diamonds, stones.
     const infoColumn = productResult.querySelector(".piece-col-info");
     const mediaColumn = productResult.querySelector(".piece-col-media");
     const priceBreakdown = productResult.querySelector(".price-breakdown-accordion");
     const diamondListing = productResult.querySelector(".diamonds-accordion");
-    const productDetails = infoColumn?.querySelector(".product-accordion");
+    const stoneListing = productResult.querySelector(".stones-accordion");
+    const productDetails =
+      infoColumn?.querySelector(".product-details-accordion") ||
+      infoColumn?.querySelector(".product-accordion");
     const productImage = mediaColumn?.querySelector(".piece-visual");
     if (infoColumn) {
       if (productImage) infoColumn.prepend(productImage);
       if (productDetails && priceBreakdown) productDetails.after(priceBreakdown);
       if (priceBreakdown && diamondListing) priceBreakdown.after(diamondListing);
       else if (productDetails && diamondListing) productDetails.after(diamondListing);
+      if (diamondListing && stoneListing) diamondListing.after(stoneListing);
+      else if (priceBreakdown && stoneListing) priceBreakdown.after(stoneListing);
+      else if (productDetails && stoneListing) productDetails.after(stoneListing);
     }
     if (mediaColumn) mediaColumn.remove();
 
@@ -579,6 +777,94 @@
         thumbBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
       });
     });
+
+    const b2bTriggerBtn = productResult.querySelector("#b2bTriggerBtn");
+    const b2bPromptBox = productResult.querySelector("#b2bPromptBox");
+    const b2bCancelBtn = productResult.querySelector("#b2bCancelBtn");
+    const b2bForm = productResult.querySelector("#b2bForm");
+    const b2bPasswordInput = productResult.querySelector("#b2bPasswordInput");
+    const b2bTogglePwBtn = productResult.querySelector("#b2bTogglePwBtn");
+    const b2bErrorMsg = productResult.querySelector("#b2bErrorMsg");
+    const b2bSubmitBtn = productResult.querySelector("#b2bSubmitBtn");
+    const b2bExitBtn = productResult.querySelector("#b2bExitBtn");
+
+    if (b2bTriggerBtn && b2bPromptBox) {
+      b2bTriggerBtn.addEventListener("click", () => {
+        b2bTriggerBtn.hidden = true;
+        b2bPromptBox.hidden = false;
+        b2bPasswordInput?.focus();
+      });
+    }
+
+    if (b2bCancelBtn && b2bPromptBox && b2bTriggerBtn) {
+      b2bCancelBtn.addEventListener("click", () => {
+        b2bPromptBox.hidden = true;
+        b2bTriggerBtn.hidden = false;
+        if (b2bErrorMsg) b2bErrorMsg.hidden = true;
+        if (b2bPasswordInput) b2bPasswordInput.value = "";
+      });
+    }
+
+    if (b2bTogglePwBtn && b2bPasswordInput) {
+      b2bTogglePwBtn.addEventListener("click", () => {
+        const isPw = b2bPasswordInput.type === "password";
+        b2bPasswordInput.type = isPw ? "text" : "password";
+        b2bTogglePwBtn.setAttribute("aria-label", isPw ? "Hide password" : "Show password");
+        const eyeOpen = b2bTogglePwBtn.querySelector(".eye-open");
+        const eyeClosed = b2bTogglePwBtn.querySelector(".eye-closed");
+        if (eyeOpen) eyeOpen.hidden = isPw;
+        if (eyeClosed) eyeClosed.hidden = !isPw;
+      });
+    }
+
+    if (b2bForm) {
+      b2bForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const secretCode = (b2bPasswordInput?.value || "").trim();
+        if (!secretCode) return;
+
+        if (b2bSubmitBtn) {
+          b2bSubmitBtn.disabled = true;
+          b2bSubmitBtn.textContent = "Verifying…";
+        }
+        if (b2bErrorMsg) b2bErrorMsg.hidden = true;
+
+        const targetCode = jewelsCode || currentSearchCode || codeInput.value;
+
+        try {
+          const data = await lookupProduct(targetCode, "b2b", secretCode);
+          if (data.success && isProduct(data.product)) {
+            isB2BMode = true;
+            renderProduct(data.product, { isB2B: true });
+          } else {
+            if (b2bErrorMsg) {
+              b2bErrorMsg.textContent = data.message || "Invalid code.";
+              b2bErrorMsg.hidden = false;
+            }
+            b2bPasswordInput?.select();
+          }
+        } catch {
+          if (b2bErrorMsg) {
+            b2bErrorMsg.textContent = "Failed to verify breakup code. Try again.";
+            b2bErrorMsg.hidden = false;
+          }
+        } finally {
+          if (b2bSubmitBtn) {
+            b2bSubmitBtn.disabled = false;
+            b2bSubmitBtn.textContent = "Unlock";
+          }
+        }
+      });
+    }
+
+    if (b2bExitBtn) {
+      b2bExitBtn.addEventListener("click", () => {
+        isB2BMode = false;
+        const targetCode = jewelsCode || currentSearchCode || codeInput.value;
+        fetchProduct(targetCode);
+      });
+    }
+
     setResultView();
     setMode("search", { keepFocus: false });
   };
@@ -588,13 +874,16 @@
     typeof product === "object" &&
     (product.jewels_code || product.style_no || product.huid_no || product.igi_no || product.product_info);
 
-  const lookupProduct = async (code) => {
-    const res = await fetch(`/api/product?search=${encodeURIComponent(code)}`);
+  const lookupProduct = async (code, type = "", breakupCode = "") => {
+    let url = `/api/product?search=${encodeURIComponent(code)}`;
+    if (type) url += `&type=${encodeURIComponent(type)}`;
+    if (breakupCode) url += `&code=${encodeURIComponent(breakupCode)}`;
+    const res = await fetch(url);
     const data = await res.json();
     return data;
   };
 
-  const fetchProduct = async (rawCode) => {
+  const fetchProduct = async (rawCode, options = {}) => {
     const code = extractCode(rawCode);
     if (!code) {
       showError("", "invalid");
@@ -609,11 +898,13 @@
     stopScanner();
 
     try {
-      const data = await lookupProduct(code);
+      const data = await lookupProduct(code, options.type, options.breakupCode);
       if (data.success && isProduct(data.product)) {
+        currentSearchCode = code;
         codeInput.value = code;
+        isB2BMode = options.type === "b2b";
         hideError();
-        renderProduct(data.product);
+        renderProduct(data.product, { isB2B: isB2BMode });
       } else {
         hasProduct = false;
         body.classList.remove("view-home");
