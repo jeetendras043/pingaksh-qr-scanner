@@ -391,14 +391,34 @@
       },
     ].filter((g) => g.rows.length > 0);
 
-    const priceRows = [];
+    const metalIcon = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l2-7h12l2 7H4z"/><path d="M7 10l2-5h6l2 5"/><path d="M7 17v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2"/></svg>`;
+    const diamondIcon = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 18 3 22 9 12 22 2 9"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="3" x2="12" y2="13"/></svg>`;
+    const stoneIcon = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 2 18 2 22 8 18 22 6 22 2 8"/><circle cx="12" cy="12" r="3.2"/></svg>`;
+    const labourIcon = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`;
+    const certIcon = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z"/><polyline points="9 12 11 14 15 10"/></svg>`;
+
+    const subtotalAmt = product.total_price != null ? Number(product.total_price) : null;
+    const calcPct = (amt) =>
+      subtotalAmt && subtotalAmt > 0 && amt != null && Number(amt) > 0
+        ? Math.round((Number(amt) / subtotalAmt) * 100)
+        : null;
+
+    const priceBoxes = [];
 
     const metalPrice = product.metal_total_price ?? price.metal?.metal_price;
     if (metalPrice != null) {
       const netWt = product.metal_nwt ?? price.metal?.metal_weight;
       const rateStr = product.metal_rate != null ? ` @ ${formatINR(product.metal_rate)}/g` : "";
-      const wtStr = netWt != null ? ` (${formatNum(netWt, 2)} g${rateStr})` : "";
-      priceRows.push([`Metal${wtStr}`, formatINR(metalPrice)]);
+      const wtSubtitle = netWt != null ? `${formatNum(netWt, 2)} g${rateStr}` : (metalDisplay || "Gold");
+      priceBoxes.push({
+        id: "metal",
+        title: "Metal",
+        subtitle: wtSubtitle,
+        amount: metalPrice,
+        formattedAmount: formatINR(metalPrice),
+        percent: calcPct(metalPrice),
+        icon: metalIcon,
+      });
     }
 
     const legacyDiaTotal = (product.diamonds || []).find(
@@ -420,27 +440,45 @@
 
     const diaPrice = product.total_dia_amount ?? price.diamond?.diamond_price;
     if (diaPrice != null) {
-      let diaLabel = "Diamonds";
+      let diaSub = "Natural diamonds";
       if (diaSummaryPcs > 0 && diaSummaryWt > 0) {
-        diaLabel = `Diamonds (${diaSummaryPcs} pcs · ${formatNum(diaSummaryWt, 3)} ct)`;
+        diaSub = `${diaSummaryPcs} pcs · ${formatNum(diaSummaryWt, 3)} ct`;
       } else if (diaSummaryWt > 0) {
-        diaLabel = `Diamonds (${formatNum(diaSummaryWt, 3)} ct)`;
+        diaSub = `${formatNum(diaSummaryWt, 3)} ct`;
       }
-      priceRows.push([diaLabel, formatINR(diaPrice)]);
+      priceBoxes.push({
+        id: "diamonds",
+        title: "Diamonds",
+        subtitle: diaSub,
+        amount: diaPrice,
+        formattedAmount: formatINR(diaPrice),
+        percent: calcPct(diaPrice),
+        icon: diamondIcon,
+      });
     }
 
     if (stoneSummaryAmt != null && (stoneSummaryAmt > 0 || stones.length > 0)) {
-      let stoneLabel = "Colour stone";
+      let stoneTitle = "Colour stones";
+      let stoneSub = "Precious gemstones";
       if (stoneSummaryPcs > 1 && stoneSummaryWt > 0) {
-        stoneLabel = `Colour stones (${stoneSummaryPcs} pcs · ${formatNum(stoneSummaryWt, 2)} ct)`;
+        stoneSub = `${stoneSummaryPcs} pcs · ${formatNum(stoneSummaryWt, 2)} ct`;
       } else if (stoneSummaryPcs === 1 && stoneSummaryWt > 0) {
-        stoneLabel = `Colour stone (1 pc · ${formatNum(stoneSummaryWt, 2)} ct)`;
+        stoneTitle = "Colour stone";
+        stoneSub = `1 pc · ${formatNum(stoneSummaryWt, 2)} ct`;
       } else if (stoneSummaryPcs > 0) {
-        stoneLabel = `Colour stones (${stoneSummaryPcs} pcs)`;
+        stoneSub = `${stoneSummaryPcs} pcs`;
       } else if (stoneSummaryWt > 0) {
-        stoneLabel = `Colour stones (${formatNum(stoneSummaryWt, 2)} ct)`;
+        stoneSub = `${formatNum(stoneSummaryWt, 2)} ct`;
       }
-      priceRows.push([stoneLabel, formatINR(stoneSummaryAmt)]);
+      priceBoxes.push({
+        id: "stones",
+        title: stoneTitle,
+        subtitle: stoneSub,
+        amount: stoneSummaryAmt,
+        formattedAmount: formatINR(stoneSummaryAmt),
+        percent: calcPct(stoneSummaryAmt),
+        icon: stoneIcon,
+      });
     }
 
     const labourAmt =
@@ -449,33 +487,51 @@
       price.manufacturing_price?.manufacturing_price;
     if (labourAmt != null) {
       const labourRate = product.labour?.rate;
-      const labourLabel = labourRate
-        ? `Labour / Making (@ ${formatINR(labourRate)}/g)`
-        : "Labour / Making charges";
-      priceRows.push([labourLabel, formatINR(labourAmt)]);
+      const labourSub = labourRate
+        ? `Rate: ${formatINR(labourRate)}/g`
+        : (Number(labourAmt) === 0 ? "No making charges" : "Crafting & finishing");
+      priceBoxes.push({
+        id: "labour",
+        title: "Making Charges",
+        subtitle: labourSub,
+        amount: labourAmt,
+        formattedAmount: formatINR(labourAmt),
+        percent: calcPct(labourAmt),
+        isZero: Number(labourAmt) === 0,
+        icon: labourIcon,
+      });
     }
 
     if (Array.isArray(product.other_charges) && product.other_charges.length > 0) {
-      product.other_charges.forEach((charge) => {
-        const code = charge.code || "Other";
-        priceRows.push([`${code} charge`, formatINR(charge.amount)]);
+      product.other_charges.forEach((charge, idx) => {
+        const code = (charge.code || "Other").trim();
+        const sub = code === "HUID" ? "Govt. Hallmarking" : (code === "IGI" ? "IGI Certification" : "Service charge");
+        priceBoxes.push({
+          id: `charge-${idx}-${code.toLowerCase()}`,
+          title: `${code} Charge`,
+          subtitle: sub,
+          amount: charge.amount,
+          formattedAmount: formatINR(charge.amount),
+          percent: calcPct(charge.amount),
+          icon: certIcon,
+        });
       });
     } else if (product.total_other_charges != null && product.total_other_charges > 0) {
-      priceRows.push(["Other charges", formatINR(product.total_other_charges)]);
+      priceBoxes.push({
+        id: "other-charges",
+        title: "Other Charges",
+        subtitle: "Certification & services",
+        amount: product.total_other_charges,
+        formattedAmount: formatINR(product.total_other_charges),
+        percent: calcPct(product.total_other_charges),
+        icon: certIcon,
+      });
     }
 
-    if (product.total_price != null && product.gst_amount != null) {
-      priceRows.push(["Subtotal (Excl. GST)", formatINR(product.total_price)]);
-    }
-
-    if (product.gst_amount != null) {
-      priceRows.push(["GST", formatINR(product.gst_amount)]);
-    }
-
+    const subtotalStr = product.total_price != null ? formatINR(product.total_price) : null;
+    const gstStr = product.gst_amount != null ? formatINR(product.gst_amount) : null;
     const grandTotal = product.grand_total ?? product.total_price ?? price.total;
-    if (grandTotal != null) {
-      priceRows.push(["Grand total", formatINR(grandTotal), true]);
-    }
+    const grandTotalStr = grandTotal != null ? formatINR(grandTotal) : null;
 
     const hasDiamonds = diamonds.length > 0;
     const stonesHaveShape = stones.some((s) => s.shape && s.shape !== "—");
@@ -604,17 +660,72 @@
                 </details>`
         : ""
       }
-          ${priceRows.length
+          ${(priceBoxes.length > 0 || grandTotal != null)
         ? `<details class="product-accordion price-breakdown-accordion">
                   <summary>Price breakdown</summary>
-                  <ul class="detail-list">
-                    ${priceRows
-          .map(
-            ([label, value, total]) =>
-              `<li class="${total ? "total" : ""}"><span>${escapeHtml(label)}</span><strong>${value}</strong></li>`
-          )
-          .join("")}
-                  </ul>
+                  <div class="price-breakdown-panel">
+                    ${priceBoxes.length
+            ? `<div class="price-boxes-grid" style="--box-count: ${priceBoxes.length};">
+                        ${priceBoxes
+                .map(
+                  (box) => `
+                        <div class="price-box price-box-${box.id}">
+                          <div class="price-box-head">
+                            <span class="price-box-icon">${box.icon}</span>
+                            <span class="price-box-title">${escapeHtml(box.title)}</span>
+                          </div>
+                          ${box.subtitle ? `<div class="price-box-meta">${escapeHtml(box.subtitle)}</div>` : ""}
+                          <div class="price-box-amount">
+                            <span class="price-box-amt-label">Amount</span>
+                            <strong class="price-box-amt-val ${box.isZero ? "is-zero" : ""}">${escapeHtml(box.formattedAmount)}</strong>
+                          </div>
+                        </div>`
+                )
+                .join("")}
+                      </div>`
+            : ""
+          }
+                    ${(subtotalStr || gstStr || grandTotal != null)
+            ? `<div class="price-summary-card">
+                        <div class="price-summary-lines">
+                          ${subtotalStr
+                ? `<div class="price-summary-row">
+                                <span class="price-summary-label">
+                                  <span>Subtotal</span>
+                                  <small>(Excl. GST)</small>
+                                </span>
+                                <span class="price-summary-val">${escapeHtml(subtotalStr)}</span>
+                              </div>`
+                : ""
+              }
+                          ${gstStr
+                ? `<div class="price-summary-row">
+                                <span class="price-summary-label">
+                                  <span>GST</span>
+                                  <small>(3%)</small>
+                                </span>
+                                <span class="price-summary-val price-gst-val">+ ${escapeHtml(gstStr)}</span>
+                              </div>`
+                : ""
+              }
+                        </div>
+                        ${grandTotal != null
+                ? `<div class="price-summary-total">
+                              <div class="price-total-info">
+                                <span class="price-total-label">Grand Total</span>
+                                <span class="price-total-hint">Inclusive of all taxes & charges</span>
+                              </div>
+                              <div class="price-total-figure">
+                                <span class="rupee">₹</span>
+                                <span class="price-total-digits">${formatINRDigits(grandTotal)}</span>
+                              </div>
+                            </div>`
+                : ""
+              }
+                      </div>`
+            : ""
+          }
+                  </div>
                 </details>`
         : ""
       }
