@@ -6,7 +6,7 @@ const router = express.Router();
 
 const API_BASE =
   process.env.PRODUCT_API_BASE_URL ||
-  "http://localhost:3000/api/sold-product/details";
+  "https://api.pingaksh.co/api/sold-product/details";
 const AUTH_TOKEN = process.env.AuthorizationToken;
 
 const isProduct = (product) =>
