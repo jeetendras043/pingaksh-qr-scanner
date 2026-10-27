@@ -309,7 +309,7 @@
     const igiNo = product.igi_no || "";
     const huidNo = product.huid_no || "";
     const metalName = product.metal || info.Metal || "";
-    const purityVal = product.metal_putiry ?? product.metal_purity;
+    const purityVal = product.metal_purity ?? product.metal_purity;
     const purityStr = purityVal != null ? `${purityVal}%` : (info.Karatage || "");
     const diamondClarity =
       product.diamond_clarity ||
@@ -564,22 +564,22 @@
               <div class="piece-head-row">
                 <h2 class="piece-title">
                   ${styleDisplayVal
-          ? `<span class="piece-title-label">Style</span> <span class="piece-title-value">${escapeHtml(styleDisplayVal)}</span>`
-          : `<span class="piece-title-value">${escapeHtml(subCategory || "Jewellery Piece")}</span>`
-        }
+        ? `<span class="piece-title-label">Style</span> <span class="piece-title-value">${escapeHtml(styleDisplayVal)}</span>`
+        : `<span class="piece-title-value">${escapeHtml(subCategory || "Jewellery Piece")}</span>`
+      }
                 </h2>
                 <div class="b2b-action-wrap ${isB2B ? "is-unlocked" : ""}">
                   ${!isB2B
-          ? `<button type="button" id="b2bTriggerBtn" class="b2b-trigger-btn" aria-expanded="false">
+        ? `<button type="button" id="b2bTriggerBtn" class="b2b-trigger-btn" aria-expanded="false">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                       <span>B2B Breakup</span>
                     </button>`
-          : `<div class="b2b-unlocked-badge">
+        : `<div class="b2b-unlocked-badge">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
                       <span>B2B Active</span>
                     </div>
                     <button type="button" id="b2bExitBtn" class="pill-btn b2b-exit-btn">Exit B2B</button>`
-        }
+      }
                 </div>
               </div>
               <div id="b2bPromptBox" class="b2b-prompt-box" hidden>
@@ -643,8 +643,8 @@
                   <summary>Product details</summary>
                   <div class="product-groups-wrap" style="--group-count: ${detailGroups.length};">
                     ${detailGroups
-            .map(
-              (group) => `
+          .map(
+            (group) => `
                     <div class="detail-group detail-group-${group.id}">
                       <div class="detail-group-head">
                         <span class="detail-group-icon">${group.icon}</span>
@@ -654,8 +654,8 @@
                         ${group.rows.map(([label, value]) => listRow(label, value)).join("")}
                       </ul>
                     </div>`
-            )
-            .join("")}
+          )
+          .join("")}
                   </div>
                 </details>`
         : ""
@@ -665,10 +665,10 @@
                   <summary>Price breakdown</summary>
                   <div class="price-breakdown-panel">
                     ${priceBoxes.length
-            ? `<div class="price-boxes-grid" style="--box-count: ${priceBoxes.length};">
+          ? `<div class="price-boxes-grid" style="--box-count: ${priceBoxes.length};">
                         ${priceBoxes
-                .map(
-                  (box) => `
+            .map(
+              (box) => `
                         <div class="price-box price-box-${box.id}">
                           <div class="price-box-head">
                             <span class="price-box-icon">${box.icon}</span>
@@ -680,37 +680,37 @@
                             <strong class="price-box-amt-val ${box.isZero ? "is-zero" : ""}">${escapeHtml(box.formattedAmount)}</strong>
                           </div>
                         </div>`
-                )
-                .join("")}
+            )
+            .join("")}
                       </div>`
-            : ""
-          }
+          : ""
+        }
                     ${(subtotalStr || gstStr || grandTotal != null)
-            ? `<div class="price-summary-card">
+          ? `<div class="price-summary-card">
                         <div class="price-summary-lines">
                           ${subtotalStr
-                ? `<div class="price-summary-row">
+            ? `<div class="price-summary-row">
                                 <span class="price-summary-label">
                                   <span>Subtotal</span>
                                   <small>(Excl. GST)</small>
                                 </span>
                                 <span class="price-summary-val">${escapeHtml(subtotalStr)}</span>
                               </div>`
-                : ""
-              }
+            : ""
+          }
                           ${gstStr
-                ? `<div class="price-summary-row">
+            ? `<div class="price-summary-row">
                                 <span class="price-summary-label">
                                   <span>GST</span>
                                   <small>(3%)</small>
                                 </span>
                                 <span class="price-summary-val price-gst-val">+ ${escapeHtml(gstStr)}</span>
                               </div>`
-                : ""
-              }
+            : ""
+          }
                         </div>
                         ${grandTotal != null
-                ? `<div class="price-summary-total">
+            ? `<div class="price-summary-total">
                               <div class="price-total-info">
                                 <span class="price-total-label">Grand Total</span>
                                 <span class="price-total-hint">Inclusive of all taxes & charges</span>
@@ -720,11 +720,11 @@
                                 <span class="price-total-digits">${formatINRDigits(grandTotal)}</span>
                               </div>
                             </div>`
-                : ""
-              }
-                      </div>`
             : ""
           }
+                      </div>`
+          : ""
+        }
                   </div>
                 </details>`
         : ""
