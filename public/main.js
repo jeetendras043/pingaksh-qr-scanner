@@ -69,6 +69,28 @@
     });
   };
 
+  const formatRate = (value) => {
+    if (value == null) return "";
+    const str = String(value).trim();
+    if (!str || str === "—" || str === "-" || str === "0") return "";
+    if (/₹|rs\.?|\/|per/i.test(str)) {
+      return str;
+    }
+    const clean = str.replace(/,/g, "");
+    const num = Number(clean);
+    if (!Number.isNaN(num) && num > 0) {
+      const decimals = num % 1 !== 0 ? 2 : 0;
+      const formatted = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }).format(num);
+      return `${formatted} / g`;
+    }
+    return "";
+  };
+
   const escapeHtml = (str) => {
     const div = document.createElement("div");
     div.textContent = str ?? "";
@@ -320,6 +342,17 @@
 
     const metalDisplay = metalName || "";
 
+    const showB2B = Boolean(
+      product.show_b2b === true ||
+      product.show_b2b === "true" ||
+      product.show_b2b === 1 ||
+      product.show_b2b === "1"
+    );
+    const canShowB2B = isB2B || showB2B;
+
+    const pureMetalRateVal = product.pure_metal_rate_gst ?? product.pure_metal_rate;
+    const pureMetalRateStr = formatRate(pureMetalRateVal);
+
     const rawStyleNo = String(styleNo || "").trim();
     const cleanStyleVal = rawStyleNo.replace(/^style\s*[:#-]?\s*/i, "").trim();
     const styleDisplayVal = cleanStyleVal || rawStyleNo;
@@ -355,6 +388,10 @@
       product.metal_rate != null && [
         "Metal rate",
         `${formatINR(product.metal_rate)} / g`,
+      ],
+      pureMetalRateStr && [
+        "Pure metal rate (incl. GST)",
+        escapeHtml(pureMetalRateStr),
       ],
     ].filter(Boolean);
 
@@ -568,21 +605,25 @@
         : `<span class="piece-title-value">${escapeHtml(subCategory || "Jewellery Piece")}</span>`
       }
                 </h2>
-                <div class="b2b-action-wrap ${isB2B ? "is-unlocked" : ""}">
+                ${canShowB2B
+        ? `<div class="b2b-action-wrap ${isB2B ? "is-unlocked" : ""}">
                   ${!isB2B
-        ? `<button type="button" id="b2bTriggerBtn" class="b2b-trigger-btn" aria-expanded="false">
+            ? `<button type="button" id="b2bTriggerBtn" class="b2b-trigger-btn" aria-expanded="false">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                       <span>B2B Breakup</span>
                     </button>`
-        : `<div class="b2b-unlocked-badge">
+            : `<div class="b2b-unlocked-badge">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
                       <span>B2B Active</span>
                     </div>
                     <button type="button" id="b2bExitBtn" class="pill-btn b2b-exit-btn">Exit B2B</button>`
+          }
+                </div>`
+        : ""
       }
-                </div>
               </div>
-              <div id="b2bPromptBox" class="b2b-prompt-box" hidden>
+              ${canShowB2B && !isB2B
+        ? `<div id="b2bPromptBox" class="b2b-prompt-box" hidden>
                 <form id="b2bForm" class="b2b-form" autocomplete="off">
                   <div class="b2b-form-head">
                     <span class="b2b-form-badge">B2B SECURE ACCESS</span>
@@ -609,7 +650,9 @@
                   </div>
                   <p id="b2bErrorMsg" class="b2b-error-msg" hidden></p>
                 </form>
-              </div>
+              </div>`
+        : ""
+      }
             </div>
             ${grandTotal != null
         ? `<div class="price-strip">
@@ -634,6 +677,13 @@
                           </div>`
           : ""
         }
+                  </div>`
+        : ""
+      }
+            ${pureMetalRateStr
+        ? `<div class="spec-card spec-card-rate">
+                    <span class="spec-label">Pure Metal Rate (Incl. GST)</span>
+                    <b class="spec-value">${escapeHtml(pureMetalRateStr)}</b>
                   </div>`
         : ""
       }
@@ -946,6 +996,12 @@
           const data = await lookupProduct(targetCode, "b2b", secretCode);
           if (data.success && isProduct(data.product)) {
             isB2BMode = true;
+            if (data.product.show_b2b === undefined && data.show_b2b !== undefined) {
+              data.product.show_b2b = data.show_b2b;
+            }
+            if (data.product.pure_metal_rate_gst === undefined && data.pure_metal_rate_gst !== undefined) {
+              data.product.pure_metal_rate_gst = data.pure_metal_rate_gst;
+            }
             renderProduct(data.product, { isB2B: true });
           } else {
             if (b2bErrorMsg) {
@@ -1015,6 +1071,12 @@
         codeInput.value = code;
         isB2BMode = options.type === "b2b";
         hideError();
+        if (data.product.show_b2b === undefined && data.show_b2b !== undefined) {
+          data.product.show_b2b = data.show_b2b;
+        }
+        if (data.product.pure_metal_rate_gst === undefined && data.pure_metal_rate_gst !== undefined) {
+          data.product.pure_metal_rate_gst = data.pure_metal_rate_gst;
+        }
         renderProduct(data.product, { isB2B: isB2BMode });
       } else {
         hasProduct = false;

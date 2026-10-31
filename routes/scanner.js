@@ -104,9 +104,23 @@ async function lookupProduct(res, code, type = "", b2bCode = "") {
     const product = payload.data;
 
     if (isProduct(product)) {
+      if (product.show_b2b === undefined && payload.show_b2b !== undefined) {
+        product.show_b2b = payload.show_b2b;
+      }
+      if (product.pure_metal_rate_gst === undefined) {
+        if (payload.pure_metal_rate_gst !== undefined) {
+          product.pure_metal_rate_gst = payload.pure_metal_rate_gst;
+        } else if (payload.pure_metal_rate !== undefined) {
+          product.pure_metal_rate_gst = payload.pure_metal_rate;
+        } else if (product.pure_metal_rate !== undefined) {
+          product.pure_metal_rate_gst = product.pure_metal_rate;
+        }
+      }
       return res.json({
         success: true,
         product,
+        show_b2b: product.show_b2b,
+        pure_metal_rate_gst: product.pure_metal_rate_gst,
         isB2B: type === "b2b",
       });
     }

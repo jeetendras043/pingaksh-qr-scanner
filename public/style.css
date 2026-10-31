@@ -886,17 +886,21 @@ body.mode-scan .scan-steps {
 
 .piece-specs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 10px;
+}
+
+.piece-specs-grid > :only-child {
+  grid-column: 1 / -1;
 }
 
 .spec-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 6px 12px;
+  flex-wrap: nowrap;
+  gap: 8px 12px;
   padding: 11px 16px;
   border-radius: 12px;
   border: 1px solid rgba(201, 179, 122, 0.24);
@@ -910,6 +914,7 @@ body.mode-scan .scan-steps {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .spec-card .spec-value {
@@ -920,6 +925,12 @@ body.mode-scan .scan-steps {
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums lining-nums;
   white-space: nowrap;
+}
+
+.spec-card-rate {
+  margin-top: 10px;
+  background: linear-gradient(135deg, rgba(201, 179, 122, 0.12), rgba(16, 14, 46, 0.55));
+  border-color: rgba(201, 179, 122, 0.28);
 }
 
 .piece-code-sub {
@@ -2955,4 +2966,23 @@ body.mode-scan .scanner-frame {
     padding: 3px 8px;
     font-size: 0.68rem;
   }
-}
+
+  .spec-card {
+    padding: 10px 14px;
+    gap: 6px 10px;
+  }
+
+  .spec-card .spec-label {
+    font-size: 0.68rem;
+  }
+
+  .spec-card .spec-value {
+    font-size: 0.98rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .piece-specs-grid {
+    grid-template-columns: 1fr;
+  }
+}
