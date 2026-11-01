@@ -805,7 +805,7 @@ body.mode-scan .scan-steps {
 }
 
 .piece-intro {
-  padding: 8px 16px 14px;
+  padding: 0;
 }
 
 .piece-head {
@@ -902,7 +902,7 @@ body.mode-scan .scan-steps {
   flex-wrap: nowrap;
   gap: 8px 12px;
   padding: 11px 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid rgba(201, 179, 122, 0.24);
   background: linear-gradient(135deg, rgba(201, 179, 122, 0.09), rgba(16, 14, 46, 0.5));
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
@@ -933,6 +933,7 @@ body.mode-scan .scan-steps {
 
 .spec-card-rate {
   margin-top: 10px;
+  border-radius: 14px;
   background: linear-gradient(135deg, rgba(201, 179, 122, 0.12), rgba(16, 14, 46, 0.55));
   border-color: rgba(201, 179, 122, 0.28);
 }
@@ -1290,7 +1291,7 @@ body.mode-scan .scanner-frame {
   }
 
   .piece-intro {
-    padding: 16px 16px 4px 4px;
+    padding: 6px 0 2px;
   }
 
   .details-block,
@@ -2484,7 +2485,7 @@ body.mode-scan .scanner-frame {
   }
 
   .piece-card .piece-intro {
-    padding: 6px 4px 2px;
+    padding: 6px 0 2px;
   }
 
   .piece-card .piece-col-info>.product-accordion,
@@ -2971,14 +2972,31 @@ body.mode-scan .scanner-frame {
     font-size: 0.68rem;
   }
 
+  .piece-intro,
+  .piece-card .piece-intro {
+    padding: 0;
+  }
+
+  .product-result .price-strip {
+    margin: 0 0 8px;
+    padding: 9px 12px;
+    min-height: 42px;
+    border-radius: 14px;
+    box-sizing: border-box;
+  }
+
   .piece-specs-grid {
-    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    margin-top: 8px;
   }
 
   .spec-card {
-    padding: 8px 10px;
-    gap: 4px 6px;
+    min-height: 42px;
+    padding: 8px 12px;
+    gap: 6px;
+    border-radius: 14px;
+    box-sizing: border-box;
   }
 
   .spec-card .spec-label {
@@ -2991,7 +3009,11 @@ body.mode-scan .scanner-frame {
   }
 
   .spec-card-rate {
+    margin-top: 8px;
+    min-height: 42px;
     padding: 9px 12px;
+    border-radius: 14px;
+    box-sizing: border-box;
   }
 
   .spec-card-rate .spec-label {
@@ -3001,6 +3023,11 @@ body.mode-scan .scanner-frame {
 
   .spec-card-rate .spec-value {
     font-size: clamp(0.84rem, 2.9vw, 0.96rem);
+  }
+
+  .product-result .product-accordion {
+    margin: 8px 0;
+    border-radius: 14px;
   }
 }
 
