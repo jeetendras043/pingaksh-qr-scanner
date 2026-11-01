@@ -97,8 +97,11 @@
     return div.innerHTML;
   };
 
-  const showError = (message, kind = "not-found") => {
-    const query = (codeInput.value || "").trim();
+  const showError = (message, kind = "not-found", searchedCode = "") => {
+    const query = (searchedCode || codeInput.value || "").trim();
+    if (query && !codeInput.value) {
+      codeInput.value = query;
+    }
     const copy = {
       "not-found": {
         kicker: "No match",
@@ -1049,6 +1052,10 @@
   const fetchProduct = async (rawCode, options = {}) => {
     const code = extractCode(rawCode);
     if (!code) {
+      hasProduct = false;
+      body.classList.remove("view-home");
+      body.classList.add("view-result");
+      setMode("search", { keepFocus: false });
       showError("", "invalid");
       return;
     }
@@ -1058,7 +1065,9 @@
     isFetching = true;
     loadingState.hidden = false;
     productResult.innerHTML = "";
-    stopScanner();
+    currentSearchCode = code;
+    codeInput.value = code;
+    setMode("search", { keepFocus: false });
 
     try {
       const data = await lookupProduct(code, options.type, options.breakupCode);
@@ -1078,13 +1087,15 @@
         hasProduct = false;
         body.classList.remove("view-home");
         body.classList.add("view-result");
-        showError(data.message || "Product not found.", "not-found");
+        setMode("search", { keepFocus: false });
+        showError(data.message || "Product not found.", "not-found", code);
       }
     } catch {
       hasProduct = false;
       body.classList.remove("view-home");
       body.classList.add("view-result");
-      showError("", "network");
+      setMode("search", { keepFocus: false });
+      showError("", "network", code);
     } finally {
       isFetching = false;
       loadingState.hidden = true;
@@ -1216,6 +1227,7 @@
         if (value && scanning) {
           scanResult.textContent = "Tag found";
           stopScanner();
+          setMode("search", { keepFocus: false });
           fetchProduct(value);
           return;
         }
