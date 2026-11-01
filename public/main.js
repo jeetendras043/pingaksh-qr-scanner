@@ -389,10 +389,6 @@
         "Metal rate",
         `${formatINR(product.metal_rate)} / g`,
       ],
-      pureMetalRateStr && [
-        "Pure metal rate (incl. GST)",
-        escapeHtml(pureMetalRateStr),
-      ],
     ].filter(Boolean);
 
     const diamondInfoRows = [
