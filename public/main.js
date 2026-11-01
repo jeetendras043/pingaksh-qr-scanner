@@ -664,14 +664,14 @@
             ${metalDisplay || diamondClarity
         ? `<div class="piece-specs-grid">
                     ${metalDisplay
-          ? `<div class="spec-card">
+          ? `<div class="spec-card spec-card-metal">
                             <span class="spec-label">Metal</span>
                             <b class="spec-value">${escapeHtml(metalDisplay)}</b>
                           </div>`
           : ""
         }
                     ${diamondClarity
-          ? `<div class="spec-card">
+          ? `<div class="spec-card spec-card-diamond">
                             <span class="spec-label">Diamond Clarity</span>
                             <b class="spec-value">${escapeHtml(diamondClarity)}</b>
                           </div>`
