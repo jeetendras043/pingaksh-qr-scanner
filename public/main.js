@@ -1045,7 +1045,14 @@
     if (type) url += `&type=${encodeURIComponent(type)}`;
     if (breakupCode) url += `&code=${encodeURIComponent(breakupCode)}`;
     const res = await fetch(url);
+    if (res.status === 401) {
+      window.location.href = "/login";
+      return { success: false, message: "Session expired. Redirecting to login…" };
+    }
     const data = await res.json();
+    if (data.requireLogin) {
+      window.location.href = "/login";
+    }
     return data;
   };
 

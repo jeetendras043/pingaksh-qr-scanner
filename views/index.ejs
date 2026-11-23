@@ -16,7 +16,10 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/style.css?v=3">
+    <% if (typeof themeStyles !== "undefined" && themeStyles) { %>
+        <%- '<style id="retailer-custom-theme">:root { ' + themeStyles + ' }</style>' %>
+    <% } %>
 </head>
 
 <body class="view-home">
@@ -25,8 +28,45 @@
 
     <div class="app">
         <header class="brand">
-            <img src="/icons/pingaksh-logo-light.png" alt="Pingaksh Diamond Jewellery" class="brand-logo">
-            <p class="brand-kicker">Search by jewels code, IGI, or HUID — or scan a QR tag</p>
+            <div class="brand-header-shell">
+                <div class="brand-center">
+                    <% if (typeof retailer !== "undefined" && retailer && (retailer.show_logo === false || retailer.show_logo === "false" || retailer.show_logo === 0)) { %>
+                        <div class="brand-text-only">
+                            <h1 class="brand-store-name">
+                                <%= retailer.retailer_name || "Jewellery Lookup" %>
+                            </h1>
+                        </div>
+                    <% } else if (typeof retailer !== "undefined" && retailer && retailer.logo_url && retailer.logo_url.trim()) { %>
+                        <img src="<%= retailer.logo_url %>" alt="<%= retailer.retailer_name || 'Jewellery Logo' %>"
+                            class="custom-retailer-logo">
+                    <% } else { %>
+                        <img src="/icons/pingaksh-logo-light.png" alt="Pingaksh Diamond Jewellery"
+                            class="brand-logo">
+                    <% } %>
+                    <p class="brand-kicker">Search by jewels code, IGI, or HUID — or scan a QR tag</p>
+                </div>
+
+                <% if (typeof retailer !== "undefined" && retailer) { %>
+                    <div class="brand-user-nav">
+                        <div class="retailer-pill"
+                            title="Signed in as <%= retailer.retailer_name || retailer.mobile %>">
+                            <span class="retailer-status-dot"></span>
+                            <span class="retailer-name">
+                                <%= retailer.retailer_name || retailer.mobile %>
+                            </span>
+                        </div>
+                        <a href="/logout" class="retailer-logout-btn" title="Sign out" aria-label="Sign out">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="logout-icon">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                <% } %>
+            </div>
         </header>
 
         <main class="stage">

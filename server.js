@@ -27,6 +27,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use("/", scannerRouter);
 
 const { execFileSync } = require("child_process");
